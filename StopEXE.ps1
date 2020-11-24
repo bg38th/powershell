@@ -1,10 +1,10 @@
 clear
 #Get-Process -ComputerName ws-lena
-#Get-Process -Name *Minecraft* | Format-Table -Property ID, ProcessName, ParentProcessId 
+$ConstPath = "C:\Program Files (x86)\Minecraft Launcher\MinecraftLauncher.exe"
 
 $IDs = @()
 $NameS = @()
-$PathS = @()
+$PathS = @($ConstPath)
 
 foreach ($mainItem in Get-Process -Name *Minecraft* )
 {
