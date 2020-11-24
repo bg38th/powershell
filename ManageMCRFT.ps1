@@ -1,10 +1,10 @@
 $ConstPath = "C:\Program Files (x86)\Minecraft Launcher\MinecraftLauncher.exe"
 $constConfig = @(
-	@{day = 1; times = @{start = "08:15"; end = "14:10" }, @{start = "16:00"; end = "17:00" } },
-	@{day = 2; times = @{start = "08:15"; end = "13:10" }, @{start = "16:00"; end = "17:00" } },
-	@{day = 3; times = @{start = "08:15"; end = "14:10" }, @{start = "16:00"; end = "17:00" } },
-	@{day = 4; times = @{start = "08:15"; end = "14:10" }, @{start = "16:00"; end = "17:00" } },
-	@{day = 5; times = @{start = "08:15"; end = "14:10" }, @{start = "16:00"; end = "17:00" } }
+	@{day = 1; times = @{start = "08:15"; end = "14:10" }, @{start = "17:00"; end = "18:00" } },
+	@{day = 2; times = @{start = "08:15"; end = "13:10" }, @{start = "17:00"; end = "18:00" } },
+	@{day = 3; times = @{start = "08:15"; end = "14:10" }, @{start = "17:00"; end = "18:00" } },
+	@{day = 4; times = @{start = "08:15"; end = "14:10" }, @{start = "17:00"; end = "18:00" } },
+	@{day = 5; times = @{start = "08:15"; end = "14:10" }, @{start = "17:00"; end = "18:00" } }
 )
 
 $curDay = Get-Date #-Date "23.11.2020 17:01"
