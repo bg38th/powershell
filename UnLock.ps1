@@ -11,5 +11,6 @@ if (Test-Path $ConfFilePath)
 	if (Test-Path $SourcePath)
 	{
 		Rename-Item -Path $SourcePath -NewName $FileName
+		Remove-Item $ConfFilePath
 	}	
 }
