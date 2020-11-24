@@ -77,4 +77,4 @@ else
 		}	
 	}
 }
-# { (Get-Process -Name *Minecraft* -id $_.ParentProcessId -ea Ignore) -eq $null } | Write-Host 
+
