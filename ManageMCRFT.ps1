@@ -16,7 +16,7 @@ function CheckWorkTime()
 
 	$curConfItem = $constConfig.where( { $_.day -eq $curDay.DayOfWeek })
 	if ($curConfItem.Count -ne 0)
- {
+	{
 		$curInterval = $curConfItem.times.where( { ($curTime -ge $_.start) -and ($curTime -le $_.end) })
 		if ($curInterval.Count -ne 0)
 		{
@@ -30,9 +30,9 @@ function CheckWorkTime()
 function GetScriptConf()
 {
 	if ( (Test-Path -Path Registry::HKEY_CURRENT_USER\Software\BGSoft) )
- { $rScriptConf = Get-Item -Path Registry::HKEY_CURRENT_USER\Software\BGSoft }
+	{ $rScriptConf = Get-Item -Path Registry::HKEY_CURRENT_USER\Software\BGSoft }
 	else 
- { $rScriptConf = New-Item -Path Registry::HKEY_CURRENT_USER\Software\BGSoft }
+	{ $rScriptConf = New-Item -Path Registry::HKEY_CURRENT_USER\Software\BGSoft }
 
 	return "Registry::" + $rScriptConf 
 
@@ -42,7 +42,7 @@ function GetMask([string]$sCurConf)
 {
 	$curMaskProperty = Get-ItemProperty -Path $sCurConf -name Mask -ErrorAction silentlycontinue
 	if ($curMaskProperty -eq $null)
- { $curMaskProperty = New-ItemProperty -Path $sCurConf -name Mask -Value "*Minecraft*" }
+	{ $curMaskProperty = New-ItemProperty -Path $sCurConf -name Mask -Value "*Minecraft*" }
 
 	return $curMaskProperty.Mask
 }
@@ -51,11 +51,11 @@ function CheckDoHomework([string]$sCurConf)
 {
 	$rHWMark = Get-ItemProperty -Path $sCurConf -name DoHomework -ErrorAction silentlycontinue
 	if ($rHWMark -eq $null)
- {
+	{
 		return 0
 	}
 	else
- {
+	{
 		return $rHWMark.DoHomework
 	}
 }
@@ -70,7 +70,7 @@ function GetProcess([string]$sMask)
 	$PathS = @()
 	$IDs = @()
 	foreach ($mainItem in Get-Process -Name $sMask )
- {
+	{
 		$IDs += $mainItem.Id
 		$ProcName = $mainItem.MainModule.ModuleName
 		$cmdLine = Get-CimInstance Win32_Process -Filter "name = '$ProcName'" | Select-Object CommandLine
@@ -83,7 +83,7 @@ function GetProcess([string]$sMask)
 
 	$IDs_slave = @()
 	foreach ($itemProc in Get-CimInstance win32_process)
- {
+	{
 		if ($itemProc.ParentProcessId -in $IDs)
 		{
 			$IDs_slave += $itemProc.ProcessId
@@ -100,7 +100,7 @@ function GetProcessConf([string]$rScriptConf, [string]$sProcessPath)
 	$bHasConf = $false
 	$oConf = $null
 	foreach ($rChildPart in Get-ChildItem $rScriptConf)
- {
+	{
 		$rChildPart = "Registry::" + $rChildPart 
 		if ((Get-ItemProperty -Path $rChildPart)."(default)" -eq $sProcessPath)
 		{
@@ -110,7 +110,7 @@ function GetProcessConf([string]$rScriptConf, [string]$sProcessPath)
 	}
 
 	if (-not $bHasConf)
- {
+	{
 		$iNewName = (Get-ChildItem $rScriptConf).Count
 		$oConf = New-Item -Path ($rScriptConf + "\" + $iNewName)
 		$oConf = "Registry::" + $oConf
@@ -149,12 +149,12 @@ if ($retBool -and -not (CheckDoHomework $rScriptConf))
 	$oProcesses = GetProcess $sCurMask
 
 	foreach ($item in $oProcesses.IDs) 
- {
+	{
 		Stop-Process -ID $item -Force
 	}
 
 	foreach ($sFullProcessPath in $oProcesses.PathS)
- {
+	{
 
 		$rProcessConf = GetProcessConf $rScriptConf $sFullProcessPath
 
@@ -174,7 +174,7 @@ if ($retBool -and -not (CheckDoHomework $rScriptConf))
 else 
 {
 	foreach ($rChildPart in Get-ChildItem $rScriptConf)
- {
+	{
 		$rChildPart = "Registry::" + $rChildPart
 		$sFullProcessPath = (Get-ItemProperty -Path $rChildPart)."(default)"
 		$FilePath = Split-Path $sFullProcessPath
