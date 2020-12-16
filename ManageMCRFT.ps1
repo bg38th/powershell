@@ -4,11 +4,11 @@ Clear-Host
 function CheckWorkTime()
 {
 	$constConfig = @(
-		@{day = 0; times = @(@{start = "17:00"; end = "20:00" }) },
-		@{day = 1; times = @{start = "08:15"; end = "14:10" }, @{start = "17:00"; end = "20:00" } },
-		@{day = 2; times = @{start = "08:15"; end = "13:10" }, @{start = "17:10"; end = "20:00" } },
-		@{day = 3; times = @{start = "08:15"; end = "14:10" }, @{start = "17:00"; end = "20:00" } },
-		@{day = 4; times = @{start = "08:15"; end = "14:10" }, @{start = "17:00"; end = "20:00" } },
+		@{day = 0; times = @(@{start = "19:00"; end = "21:00" }) },
+		@{day = 1; times = @{start = "08:15"; end = "14:10" }, @{start = "19:00"; end = "21:00" } },
+		@{day = 2; times = @{start = "08:15"; end = "13:10" }, @{start = "19:10"; end = "21:00" } },
+		@{day = 3; times = @{start = "08:15"; end = "14:10" }, @{start = "19:00"; end = "21:00" } },
+		@{day = 4; times = @{start = "08:15"; end = "14:10" }, @{start = "19:00"; end = "21:00" } },
 		@{day = 5; times = @(@{start = "08:15"; end = "14:10" }) }
 	)
 
