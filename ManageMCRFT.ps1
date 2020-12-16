@@ -158,7 +158,7 @@ function SetCriptFileName([string]$rProcessConf)
 	return $sNewFileName
 }
 
-function GetCriptFileName([string]$rProcessConf)
+function GetScriptFileName([string]$rProcessConf)
 {
 	$sFileName = Get-ItemProperty -Path $rProcessConf -Name "newFileName"
 
@@ -205,7 +205,7 @@ else
 		$rChildPart = "Registry::" + $rChildPart
 		$sFullProcessPath = (Get-ItemProperty -Path $rChildPart)."(default)"
 		$FilePath = Split-Path $sFullProcessPath
-		$sCriptFileName = GetCriptFileName $rChildPart
+		$sCriptFileName = GetScriptFileName $rChildPart
 		$SourcePath = $FilePath + '\' + $sCriptFileName
 		$FileName = Get-ItemProperty -Path $rChildPart -Name "fileName" 
 		$res = Rename-Item -Path $SourcePath -NewName $FileName.fileName
