@@ -3,22 +3,27 @@ Clear-Host
 
 function CheckWorkTime()
 {
-	$constConfig = @(
-		@{day = 0; times = @(@{start = "19:00"; end = "21:00" }) },
-		@{day = 1; times = @{start = "08:15"; end = "14:10" }, @{start = "19:00"; end = "21:00" } },
-		@{day = 2; times = @{start = "08:15"; end = "13:10" }, @{start = "19:10"; end = "21:00" } },
-		@{day = 3; times = @{start = "08:15"; end = "14:10" }, @{start = "19:00"; end = "21:00" } },
-		@{day = 4; times = @{start = "08:15"; end = "14:10" }, @{start = "19:00"; end = "21:00" } },
-		@{day = 5; times = @(@{start = "08:15"; end = "14:10" }) }
+	$DefaultIntervals = @(
+		@{start = "08:15"; end = "14:10" },
+		@{start = "19:00"; end = "21:00" } 
 	)
 
-	$curDay = Get-Date #-Date "23.11.2020 17:01"
+	$constConfig = @(
+		@{day = 0; times = @("default_2") },
+		@{day = 1; times = @("default_1"; "default_2" ) },
+		@{day = 2; times = @(@{start = "08:15"; end = "13:10" }; "default_2" ) },
+		@{day = 3; times = @("default_1"; "default_2" ) },
+		@{day = 4; times = @("default_1"; "default_2" ) },
+		@{day = 5; times = @("default_1") }
+	)
+
+	$curDay = Get-Date -Date "16.12.2020 19:01"
 	$curTime = Get-Date -Date $curDay -Format t
 
-	$curConfItem = $constConfig.where( { $_.day -eq $curDay.DayOfWeek })
+	$curConfItem = GetCurConfItem $curDay $constConfig $DefaultIntervals
 	if ($curConfItem.Count -ne 0)
 	{
-		$curInterval = $curConfItem.times.where( { ($curTime -ge $_.start) -and ($curTime -le $_.end) })
+		$curInterval = $curConfItem.where( { ($curTime -ge $_.start) -and ($curTime -le $_.end) })
 		if ($curInterval.Count -ne 0)
 		{
 			return $true
@@ -26,6 +31,27 @@ function CheckWorkTime()
 	}
 
 	return $false
+}
+
+function GetCurConfItem($curDay, $constConfig, $DefaultIntervals)
+{
+	$curConfItem = $constConfig.where( { $_.day -eq $curDay.DayOfWeek })
+	$curConfTimes = @()
+	foreach ($timeItem in $curConfItem.times)
+	{
+		
+		If ($timeItem.GetType().Name -eq "String")
+		{
+			$numStr = $timeItem -replace "default_", ""
+			$num = [convert]::ToInt32($numStr, 10)
+			$curConfTimes += $DefaultIntervals[$num - 1]
+		}
+		else
+		{
+			$curConfTimes += $timeItem
+		}
+	}
+	return $curConfTimes
 }
 
 function GetScriptConf()
