@@ -17,7 +17,7 @@ function CheckWorkTime()
 		@{day = 5; times = @("default_1") }
 	)
 
-	$curDay = Get-Date -Date "16.12.2020 19:01"
+	$curDay = Get-Date #-Date "16.12.2020 19:01"
 	$curTime = Get-Date -Date $curDay -Format t
 
 	$curConfItem = GetCurConfItem $curDay $constConfig $DefaultIntervals
