@@ -1,23 +1,6 @@
+Using module  .\Registry.class.psm1
+
 Clear-Host
-function GetScriptConf()
-{
-	if ( (Test-Path -Path Registry::HKEY_CURRENT_USER\Software\BGSoft) )
-	{ $rScriptConf = Get-Item -Path Registry::HKEY_CURRENT_USER\Software\BGSoft }
-	else 
-	{ $rScriptConf = New-Item -Path Registry::HKEY_CURRENT_USER\Software\BGSoft }
-
-	return "Registry::" + $rScriptConf 
-
-}
-
-function GetMask([string]$sCurConf)
-{
-	$curMaskProperty = Get-ItemProperty -Path $sCurConf -name Mask -ErrorAction silentlycontinue
-	if ($curMaskProperty -eq $null)
-	{ $curMaskProperty = New-ItemProperty -Path $sCurConf -name Mask -Value "*Minecraft*" }
-
-	return $curMaskProperty.Mask
-}
 
 function GetProcess([string]$sMask)
 {
@@ -66,7 +49,7 @@ function GetProcessConf([string]$rScriptConf, [string]$sProcessPath)
 
 function SetFCriptFileName([string]$rProcessConf)
 {
-	$sNewFileName = -join (((48..57) + (65..90) + (97..122)) * 80 | Get-Random -Count 16 | % { [char]$_ }) + ".txt"
+	$sNewFileName = -join (((48..57) + (65..90) + (97..122)) * 80 | Get-Random -Count 16 | ForEach-Object { [char]$_ }) + ".txt"
 	$sNewFileName = Set-ItemProperty -Path $rProcessConf -Name "newFileName" -Value $sNewFileName
 
 	return $sNewFileName
@@ -79,19 +62,17 @@ function GetCriptFileName([string]$rProcessConf)
 	return $sFileName
 }
 
-$rScriptConf = GetScriptConf
+$oRegConfig = [RegistryConfig]::new();
 
-$sCurMask = GetMask $rScriptConf
+$sFullProcessPath = GetProcess $oRegConfig.Mask
 
-$sFullProcessPath = GetProcess $sCurMask
-
-if ($sFullProcessPath -ne $null)
+if ($null -ne $sFullProcessPath)
 {
 
 	$sFilePath = Split-Path $sFullProcessPath
 	#$sFileName = Split-Path $sFullProcessPath -Leaf
 
-	$rProcessConf = GetProcessConf $rScriptConf $sFullProcessPath
+	$rProcessConf = GetProcessConf $oRegConfig.ScriptConfig $sFullProcessPath
 	$sNewFileName = SetFCriptFileName $rProcessConf
 
 	Write-Host $sFullProcessPath

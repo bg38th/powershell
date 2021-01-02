@@ -1,6 +1,8 @@
+Using module  .\Registry.class.psm1
+
 @{
 	ModuleVersion          = "1.0.0.0"
-	Author                 = "<oris Gordon"
+	Author                 = "Boris Gordon"
 	Copyright              = "38th.ru"
 	PowerShellVersion      = "7.0"
 	DotNetFrameworkVersion = "4.0"
@@ -17,7 +19,8 @@ class TimeInterval
    {num: 3, start: "19:00", end: "21:00"},
    {num: 4, start: "21:30", end: "23:59:59.9999999"},
    {num: 5, start: "22:30", end: "23:59:59.9999999"}
-   ]'
+]'
+
 	hidden [string]$constConfigJSON = '[
    {day: 0, times: ["default_1", "default_3", "default_4"]},
    {day: 1, times: ["default_1", "default_2", "default_3", "default_4"]},
