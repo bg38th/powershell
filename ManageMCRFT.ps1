@@ -3,52 +3,6 @@ Using module  .\Registry.class.psm1
 
 Clear-Host
 #$ConstPath = "C:\Program Files (x86)\Minecraft Launcher\MinecraftLauncher.exe"
-function GetScriptConf()
-{
-	if ( (Test-Path -Path Registry::HKEY_CURRENT_USER\Software\BGSoft) )
-	{ 
-		$rScriptConf = Get-Item -Path Registry::HKEY_CURRENT_USER\Software\BGSoft 
-	}
-	else 
-	{ 
-		$rScriptConf = New-Item -Path Registry::HKEY_CURRENT_USER\Software\BGSoft 
-	}
-
-	if ( -not (Test-Path -Path Registry::HKEY_CURRENT_USER\Software\BGSoft\TIME)) 
-	{ 
-		New-Item -Path Registry::HKEY_CURRENT_USER\Software\BGSoft\TIME 
-	}
-
-	return "Registry::" + $rScriptConf 
-
-}
-
-function GetMask([string]$sCurConf)
-{
-	$curMaskProperty = Get-ItemProperty -Path $sCurConf -name Mask -ErrorAction silentlycontinue
-	if ( $null -eq $curMaskProperty -or $curMaskPropert -eq "")
-	{ $curMaskProperty = New-ItemProperty -Path $sCurConf -name Mask -Value "*Minecraft*" }
-
-	return $curMaskProperty.Mask
-}
-
-function CheckDoHomework([string]$sCurConf)
-{
-	$rHWMark = Get-ItemProperty -Path $sCurConf -name DoHomework -ErrorAction silentlycontinue
-	if ( $null -eq $rHWMark -or $rHWMark -eq "" )
-	{
-		return 0
-	}
-	else
-	{
-		return $rHWMark.DoHomework
-	}
-}
-
-function ClearDoHomework([string]$sCurConf)
-{
-	Remove-ItemProperty -Path $sCurConf -name DoHomework -ErrorAction silentlycontinue
-}
 
 function GetProcess([string]$sMask)
 {
@@ -101,7 +55,7 @@ function GetProcessConf([string]$rScriptConf, [string]$sProcessPath)
 		$oConf = "Registry::" + $oConf
 
 		Set-Item -Path $oConf -Value $sProcessPath
-		$sFileName = Split-Path $sFullProcessPath -Leaf
+		$sFileName = Split-Path $sProcessPath -Leaf
 		Set-ItemProperty -Path $oConf -Name "fileName" -Value $sFileName
 	}
 
@@ -123,15 +77,15 @@ function GetScriptFileName([string]$rProcessConf)
 	return $sFileName.newFileName
 }
 
-$rScriptConf = GetScriptConf
-$sCurMask = GetMask $rScriptConf
+$oRegConfig = [RegistryConfig]::new();
 
-$oIntervalConfig = [TimeInterval]::new($rScriptConf);
+$oIntervalConfig = [TimeInterval]::new($oRegConfig.ScriptConf);
 $retBool = $oIntervalConfig.CheckWorkTime($null);
+#$retBool = $oIntervalConfig.CheckWorkTime("16.12.2020 19:01");
 
-if ($retBool -and -not (CheckDoHomework $rScriptConf))
+if ($retBool -and -not ($oRegConfig.CheckDoHomework()))
 {
-	$oProcesses = GetProcess $sCurMask
+	$oProcesses = GetProcess $oRegConfig.Mask
 
 	foreach ($item in $oProcesses.IDs) 
 	{
@@ -141,7 +95,7 @@ if ($retBool -and -not (CheckDoHomework $rScriptConf))
 	foreach ($sFullProcessPath in $oProcesses.PathS)
 	{
 
-		$rProcessConf = GetProcessConf $rScriptConf $sFullProcessPath
+		$rProcessConf = GetProcessConf $oRegConfig.ScriptConf $sFullProcessPath
 
 		$FilePath = Split-Path $sFullProcessPath
 		if (Test-Path $sFullProcessPath)
@@ -158,7 +112,7 @@ if ($retBool -and -not (CheckDoHomework $rScriptConf))
 }
 else 
 {
-	foreach ($rChildPart in Get-ChildItem $rScriptConf | Where-Object { $_.PSChildName -like "PROF_*" })
+	foreach ($rChildPart in Get-ChildItem $oRegConfig.ScriptConf | Where-Object { $_.PSChildName -like "PROF_*" })
 	{
 		$rChildPart = "Registry::" + $rChildPart
 		$sFullProcessPath = (Get-ItemProperty -Path $rChildPart)."(default)"
@@ -176,5 +130,5 @@ else
 
 if (-not $retBool)
 {
-	ClearDoHomework $rScriptConf
+	$oRegConfig.ClearDoHomework();
 }

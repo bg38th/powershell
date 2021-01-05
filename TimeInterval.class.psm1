@@ -31,7 +31,7 @@ class TimeInterval
    {day: 6, times: ["default_1", "default_5"]}
 ]'
 
-	[bool]CheckWorkTime($curDay)
+	[bool]CheckWorkTime($curDayParam)
 	{
 		function GetCurConfItem($curDay, $timeConfig)
 		{
@@ -39,9 +39,13 @@ class TimeInterval
 			return $curConfItem.times
 		}
 		
-		if ( $null -eq $curDay )
+		if ( $null -eq $curDayParam )
 		{
-			$curDay = Get-Date #-Date "16.12.2020 19:01"
+			$curDay = Get-Date;
+		}
+		else
+		{
+			$curDay = Get-Date -Date $curDayParam;
 		}
 
 		$curTime = Get-Date -Date $curDay -Format t
