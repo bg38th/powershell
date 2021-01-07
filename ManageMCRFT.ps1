@@ -4,70 +4,48 @@ Using module  .\Registry.class.psm1
 Clear-Host
 #$ConstPath = "C:\Program Files (x86)\Minecraft Launcher\MinecraftLauncher.exe"
 
-function GetProcess([string]$sMask)
+function GetProcess([string[]]$arrMask)
 {
 	$PathS = @()
 	$IDs = @()
-	foreach ($mainItem in Get-Process -Name $sMask )
+	foreach ($sMask in $arrMask)
 	{
-		$IDs += $mainItem.Id
-		$ProcName = $mainItem.MainModule.ModuleName
-		$cmdLine = Get-CimInstance Win32_Process -Filter "name = '$ProcName'" | Select-Object CommandLine
-		$Name = $cmdLine[0].CommandLine.Replace('"', '').Trim()
-		if (-not ($Name -in $PathS))
+		foreach ($mainItem in Get-Process -Name $sMask )
 		{
-			$PathS += $Name
-		}
-	}
-
-	$IDs_slave = @()
-	foreach ($itemProc in Get-CimInstance win32_process)
-	{
-		if ($itemProc.ParentProcessId -in $IDs)
-		{
-			$IDs_slave += $itemProc.ProcessId
+			$IDs += $mainItem.Id
+			$ProcName = $mainItem.MainModule.ModuleName
+			$cmdLine = Get-CimInstance Win32_Process -Filter "name = '$ProcName'" | Select-Object CommandLine
+			$Name = $cmdLine[0].CommandLine.Replace('"', '').Trim()
+			if (-not ($Name -in $PathS))
+			{
+				$PathS += $Name
+			}
 		}
 
-	}
+		$IDs_slave = @()
+		foreach ($itemProc in Get-CimInstance win32_process)
+		{
+			if ($itemProc.ParentProcessId -in $IDs)
+			{
+				$IDs_slave += $itemProc.ProcessId
+			}
 
-	$IDs += $IDs_slave
+		}
+
+		$IDs += $IDs_slave
+	}
 	return @{PathS = $PathS; IDs = $IDs }
 }
 
-function GetProcessConf([string]$rScriptConf, [string]$sProcessPath)
+function GetProcessConf([RegistryConfig]$oRegConf, [string]$sProcessPath)
 {
-	$bHasConf = $false
-	$oConf = $null
-	foreach ($rChildPart in Get-ChildItem $rScriptConf | Where-Object { $_.PSChildName -like "PROF_*" })
+	$oProcessConf = $oRegConf.GetProcessConf($sProcessPath);
+	if ($null -ne $oProcessConf)
 	{
-		$rChildPart = "Registry::" + $rChildPart 
-		if ((Get-ItemProperty -Path $rChildPart)."(default)" -eq $sProcessPath)
-		{
-			$bHasConf = $true
-			$oConf = $rChildPart
-		}
+		return $oProcessConf
 	}
 
-	if (-not $bHasConf)
-	{
-		$iNewName = (Get-ChildItem $rScriptConf | Where-Object { $_.PSChildName -like "PROF_*" }).Count
-		$oConf = New-Item -Path ($rScriptConf + "\PROF_" + $iNewName)
-		$oConf = "Registry::" + $oConf
-
-		Set-Item -Path $oConf -Value $sProcessPath
-		$sFileName = Split-Path $sProcessPath -Leaf
-		Set-ItemProperty -Path $oConf -Name "fileName" -Value $sFileName
-	}
-
-	return $oConf
-}
-
-function SetCriptFileName([string]$rProcessConf)
-{
-	$sNewFileName = -join (((48..57) + (65..90) + (97..122)) * 80 | Get-Random -Count 16 | ForEach-Object { [char]$_ }) + ".txt"
-	Set-ItemProperty -Path $rProcessConf -Name "newFileName" -Value $sNewFileName
-
-	return $sNewFileName
+	return $oRegConf.SetProcessConf($sProcessPath);
 }
 
 function GetScriptFileName([string]$rProcessConf)
@@ -81,11 +59,11 @@ $oRegConfig = [RegistryConfig]::new();
 
 $oIntervalConfig = [TimeInterval]::new($oRegConfig.ScriptConf);
 $retBool = $oIntervalConfig.CheckWorkTime($null);
-#$retBool = $oIntervalConfig.CheckWorkTime("16.12.2020 19:01");
+# $retBool = $oIntervalConfig.CheckWorkTime("07.01.2021 21:01");
 
 if ($retBool -and -not ($oRegConfig.CheckDoHomework()))
 {
-	$oProcesses = GetProcess $oRegConfig.Mask
+	$oProcesses = GetProcess $oRegConfig.Masks
 
 	foreach ($item in $oProcesses.IDs) 
 	{
@@ -94,37 +72,30 @@ if ($retBool -and -not ($oRegConfig.CheckDoHomework()))
 
 	foreach ($sFullProcessPath in $oProcesses.PathS)
 	{
-
-		$rProcessConf = GetProcessConf $oRegConfig.ScriptConf $sFullProcessPath
-
-		$FilePath = Split-Path $sFullProcessPath
+		$oProcessConf = GetProcessConf $oRegConfig $sFullProcessPath
 		if (Test-Path $sFullProcessPath)
 		{
-			$sNewFileName = SetCriptFileName $rProcessConf
+			$sNewFileName = $oRegConfig.SetMaskFileName($oProcessConf);
 			Rename-Item -Path $sFullProcessPath -NewName $sNewFileName
-			Write-Host "Move: " + $sFullProcessPath
+			Write-Host "Move: " $sFullProcessPath
 		}
 		else 
 		{
-			Write-Host $sFullProcessPath + " не найден"
+			Write-Host $sFullProcessPath " не найден"
 		}
 	}
 }
 else 
 {
-	foreach ($rChildPart in Get-ChildItem $oRegConfig.ScriptConf | Where-Object { $_.PSChildName -like "PROF_*" })
+	foreach ($oChildPart in $oRegConfig.ProcessConf )
 	{
-		$rChildPart = "Registry::" + $rChildPart
-		$sFullProcessPath = (Get-ItemProperty -Path $rChildPart)."(default)"
-		$FilePath = Split-Path $sFullProcessPath
-		$sCriptFileName = GetScriptFileName $rChildPart
-		$SourcePath = $FilePath + '\' + $sCriptFileName
-		$FileName = Get-ItemProperty -Path $rChildPart -Name "fileName" 
-		Rename-Item -Path $SourcePath -NewName $FileName.fileName
+		$FilePath = Split-Path $oChildPart.ProcessPath;
+		$SourcePath = $FilePath + '\' + $oChildPart.MaskFileName
+		Rename-Item -Path $SourcePath -NewName $oChildPart.NativeFileName
 
-		Remove-Item $rChildPart
+		Write-Host $oChildPart.NativeFileName " восстановлен"
 
-		Write-Host $FileName.fileName + " восстановлен"
+		$oRegConfig.RemoveProcessConf($oChildPart);
 	}
 }
 
