@@ -48,20 +48,14 @@ function GetProcessConf([RegistryConfig]$oRegConf, [string]$sProcessPath)
 	return $oRegConf.SetProcessConf($sProcessPath);
 }
 
-function GetScriptFileName([string]$rProcessConf)
-{
-	$sFileName = Get-ItemProperty -Path $rProcessConf -Name "newFileName"
-
-	return $sFileName.newFileName
-}
 
 $oRegConfig = [RegistryConfig]::new();
+$oIntervalConfig = [TimeIntervalProcessor]::new($oRegConfig);
+$bIntervalActive = $oIntervalConfig.CheckWorkTime($null);
+# $bIntervalActive = $oIntervalConfig.CheckWorkTime("07.01.2021 21:01");
+$bParentControlUp = ($bIntervalActive -and -not ($oRegConfig.CheckDoHomework()));
 
-$oIntervalConfig = [TimeInterval]::new($oRegConfig.ScriptConf);
-$retBool = $oIntervalConfig.CheckWorkTime($null);
-# $retBool = $oIntervalConfig.CheckWorkTime("07.01.2021 21:01");
-
-if ($retBool -and -not ($oRegConfig.CheckDoHomework()))
+if ($bParentControlUp)
 {
 	$oProcesses = GetProcess $oRegConfig.Masks
 
@@ -99,7 +93,7 @@ else
 	}
 }
 
-if (-not $retBool)
+if (-not $bIntervalActive)
 {
 	$oRegConfig.ClearDoHomework();
 }

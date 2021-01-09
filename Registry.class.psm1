@@ -5,7 +5,18 @@
 	PowerShellVersion      = "7.0"
 	DotNetFrameworkVersion = "4.0"
 	GUID                   = '2dc64c35-9152-413a-ba22-ca11837a041d'
-	FunctionsToExport      = @("CheckDoHomework", "ClearDoHomework", "GetProcessConf", "SetProcessConf", "SetMaskFileName", "RemoveProcessConf")
+	FunctionsToExport      = @(
+		"CheckDoHomework"
+		, "ClearDoHomework"
+		, "GetProcessConf"
+		, "SetProcessConf"
+		, "SetMaskFileName"
+		, "RemoveProcessConf"
+		, "GetTimeConfigJSON"
+		, "GetParentControlState"
+		, "SetParentControlState"
+		, "ToggleParentControlState"
+	)
 }
 
 class ProcessConf
@@ -45,8 +56,10 @@ class RegistryConfig
 	hidden [string]$BaseMasksJSON = '["*Minecraft*"]';
 	
 	[string] $ScriptConf;
+	[string] $TimeConf;
 	[string[]] $Masks;
 	[ProcessConf[]] $ProcessConf;
+	[bool]$ParentControlState;
 
 	RegistryConfig()
 	{
@@ -88,9 +101,20 @@ class RegistryConfig
 
 			return $curMaskProperty.Masks | ConvertFrom-Json;
 		}
+
+		function GetActiveParentControl()
+		{
+			$ParentControl = Get-ItemProperty -Path $this.TimeConf -name "ParentControlState" -ErrorAction silentlycontinue;
+			if ( $null -eq $ParentControl -or $ParentControl -eq "")
+			{ $ParentControl = New-ItemProperty -Path $this.TimeConf-name "ParentControlState" -Value 0; }
+
+			return $ParentControl.ParentControlState;
+		}
 		
-		$this.ScriptConf = GetScriptConf $this.BaseKeyPath
-		$this.Masks = GetMask
+		$this.ScriptConf = GetScriptConf $this.BaseKeyPath;
+		$this.TimeConf = $this.ScriptConf + '\TIME';
+		$this.Masks = GetMask;
+		$this.ParentControlState = GetActiveParentControl;
 
 		foreach ($rChildPart in Get-ChildItem $this.ScriptConf | Where-Object { $_.PSChildName -like "PROF_*" })
 		{
@@ -162,6 +186,49 @@ class RegistryConfig
 	[void]ClearDoHomework()
 	{
 		Remove-ItemProperty -Path $this.ScriptConf -name DoHomework -ErrorAction silentlycontinue
+	}
+
+	[string]GetTimeConfigJSON([string]$VarName, [string]$Default)
+	{
+		$VarJSON = Get-ItemProperty -Path $this.TimeConf -name $VarName -ErrorAction silentlycontinue
+		if ( $null -eq $VarJSON -or $VarJSON -eq "")
+		{ $VarJSON = New-ItemProperty -Path $this.TimeConf -name $VarName -PropertyType MultiString -Value $Default }
+	
+		[string]$sRet = $VarJSON | Get-ItemPropertyValue -name $VarName;
+		return $sRet
+	}
+	
+	[bool]GetParentControlState()
+	{
+		$ParentControl = Get-ItemProperty -Path $this.TimeConf -name "ParentControlState";
+		if ( $null -eq $ParentControl -or $ParentControl -eq "")
+		{
+			$this.ParentControlState = $false;
+		}
+		else
+		{
+			$this.ParentControlState = $ParentControl.ParentControlState;
+		}
+		
+		return $this.ParentControlState;
+	}
+	
+	[void]SetParentControlState([bool]$state)
+	{
+		$this.ParentControlState = $state;
+		Set-ItemProperty -Path $this.TimeConf -Name "ParentControlState" -Value $state;
+	}
+
+	[bool]ToggleParentControlState([bool]$NewState)
+	{
+		$curState = $this.GetParentControlState();
+		if ($curState -xor $NewState)
+		{
+			$this.SetParentControlState($NewState);
+			return $true;
+		}
+
+		return $false;
 	}
 
 }

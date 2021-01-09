@@ -9,9 +9,21 @@ Using module  .\Registry.class.psm1
 	FunctionsToExport      = "CheckWorkTime"
 }
 
-class TimeInterval
+class SimpleTimeInterval
 {
-	$Config
+	[string]$start;
+	[string]$end;
+}
+
+class DayTimeProfile
+{
+	[int]$day;
+	[SimpleTimeInterval[]]$times;
+}
+
+class TimeIntervalProcessor
+{
+	[DayTimeProfile[]]$Config;
 
 	hidden [string]$DefaultIntervalJSON = '[
    {num: 1, start: "00:00", end: "06:45"},
@@ -63,34 +75,24 @@ class TimeInterval
 		return $false
 	}
 	
-	TimeInterval([string]$sCurConf)
+	TimeIntervalProcessor([RegistryConfig]$oRegConf)
 	{
-		function GetRegistryJSON([string]$sCurConf, [string]$Var, [string]$Default)
+		$TimeDefault = $oRegConf.GetTimeConfigJSON("DefaultInterval", $this.DefaultIntervalJSON) | ConvertFrom-Json;
+		$TimeConfig = $oRegConf.GetTimeConfigJSON("Config", $this.constConfigJSON) | ConvertFrom-Json;
+		foreach ($itemTimeProfile in $TimeConfig)
 		{
-			[string]$TimePath = $sCurConf + "\TIME"
-			$VarJSON = Get-ItemProperty -Path $TimePath -name $Var -ErrorAction silentlycontinue
-			if ( $null -eq $VarJSON -or $VarJSON -eq "")
-			{ $VarJSON = New-ItemProperty -Path $TimePath -name $Var -PropertyType MultiString -Value $Default }
-		
-			[string]$sRet = $VarJSON | Get-ItemPropertyValue -name $Var;
-			return $sRet
-		}
-		
-		$TimeDefault = GetRegistryJSON $sCurConf "DefaultInterval" $this.DefaultIntervalJSON  | ConvertFrom-Json;
-		$this.Config = GetRegistryJSON $sCurConf "Config" $this.constConfigJSON | ConvertFrom-Json;
-		for ($i = 0; $i -lt $this.Config.length ; $i++)
-		{
-			for ($j = 0; $j -lt $this.Config[$i].times.length ; $j++ )
+			for ($j = 0; $j -lt $itemTimeProfile.times.length ; $j++ )
 			{
-				If ($this.Config[$i].times[$j].GetType().Name -eq "String" -and $this.Config[$i].times[$j] -like "default_*")
+				If ($itemTimeProfile.times[$j].GetType().Name -eq "String" -and $itemTimeProfile.times[$j] -like "default_*")
 				{
-					$numStr = $this.Config[$i].times[$j] -replace "default_", ""
+					$numStr = $itemTimeProfile.times[$j] -replace "default_", ""
 					$num = [convert]::ToInt32($numStr, 10)
 					$curDefaultInterval = $TimeDefault.where( { $_.num -eq $num })
-					# $this.Config[$i].times[$j] = @{start = $curDefaultInterval.start; end = $curDefaultInterval.end };
-					$this.Config[$i].times[$j] = '{start: "' + $curDefaultInterval.start + '", end: "' + $curDefaultInterval.end + '"}' | ConvertFrom-Json;
+					# $itemTimeProfile.times[$j] = @{start = $curDefaultInterval.start; end = $curDefaultInterval.end };
+					$itemTimeProfile.times[$j] = '{start: "' + $curDefaultInterval.start + '", end: "' + $curDefaultInterval.end + '"}' | ConvertFrom-Json;
 				}
 			}
+			$this.Config += $itemTimeProfile;
 		}
 	}
 }

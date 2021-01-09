@@ -1,3 +1,4 @@
+Clear-Host
 function GetScriptConf($comp)
 {
 	$HasRegKey = Invoke-Command -ComputerName $comp -ScriptBlock { Test-Path -Path Registry::HKEY_CURRENT_USER\Software\BGSoft }
@@ -27,3 +28,4 @@ function SetHomeworkMark([string]$sCurConf, $Computer)
 $RemoteComp = "WS-LENA"
 $rScriptConf = GetScriptConf $RemoteComp
 SetHomeworkMark $rScriptConf $RemoteComp
+Set-ItemProperty -Path Registry::HKEY_CURRENT_USER\Software\BGSoft -name DoHomework -Value 1 #-ErrorAction silentlycontinue
