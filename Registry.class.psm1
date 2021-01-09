@@ -5,6 +5,7 @@
 	PowerShellVersion      = "7.0"
 	DotNetFrameworkVersion = "4.0"
 	GUID                   = '2dc64c35-9152-413a-ba22-ca11837a041d'
+	VariablesToExport      = '*'
 	FunctionsToExport      = @(
 		"CheckDoHomework"
 		, "ClearDoHomework"

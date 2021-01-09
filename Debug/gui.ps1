@@ -1,3 +1,4 @@
+Clear-Host;
 <# This form was created using POSHGUI.com  a free online gui designer for PowerShell
 .NAME
     Untitled
@@ -77,17 +78,19 @@ $d0.Font = New-Object System.Drawing.Font('Microsoft Sans Serif', 10)
 
 $Form.controls.AddRange(@($mask, $d1, $d2, $d3, $d4, $d5, $d6, $d0))
 
-$d1.Add_DoubleClick( { SetTime })
-$d2.Add_DoubleClick( { SetTime })
-$d3.Add_DoubleClick( { SetTime })
-$d4.Add_DoubleClick( { SetTime })
-$d5.Add_DoubleClick( { SetTime })
-$d6.Add_DoubleClick( { SetTime })
-$d7.Add_DoubleClick( { SetTime })
+$d1.Add_Click( { SetTime });
+$d2.Add_Click( { SetTime });
+$d3.Add_Click( { SetTime });
+$d4.Add_Click( { SetTime });
+$d5.Add_Click( { SetTime });
+$d6.Add_Click( { SetTime });
+$d0.Add_Click( { SetTime });
 
-function SetTime 
+function SetTime()
 {
-    Write-Host $_
+    $Action = $_;
+    $oThis = $this;
+    Write-Host $this.Text ---> $this.CheckState ---> $this.Checked;
 }
 
 

@@ -11,7 +11,7 @@ $oIntervalConfig = [TimeIntervalProcessor]::new($oRegConfig);
 $bIntervalActive = $oIntervalConfig.CheckWorkTime($null);
 # $bIntervalActive = $oIntervalConfig.CheckWorkTime("07.01.2021 21:01");
 $bParentControlStateUp = ($bIntervalActive -and -not ($oRegConfig.CheckDoHomework()));
-if ($bParentControlUp)
+if ($bParentControlStateUp)
 {
 	#Rule ON
 	if ($oRegConfig.ToggleParentControlState($bParentControlStateUp))

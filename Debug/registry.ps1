@@ -1,4 +1,4 @@
-Using module  .\Registry.class.psm1
+Using module  ..\Registry.class.psm1
 
 Clear-Host
 
