@@ -1,25 +1,3 @@
-@{
-	ModuleVersion          = "1.0.0.0"
-	Author                 = "Boris Gordon"
-	Copyright              = "38th.ru"
-	PowerShellVersion      = "7.0"
-	DotNetFrameworkVersion = "4.0"
-	GUID                   = '2dc64c35-9152-413a-ba22-ca11837a041d'
-	VariablesToExport      = '*'
-	FunctionsToExport      = @(
-		"CheckDoHomework"
-		, "ClearDoHomework"
-		, "GetProcessConf"
-		, "SetProcessConf"
-		, "SetMaskFileName"
-		, "RemoveProcessConf"
-		, "GetTimeConfigJSON"
-		, "GetParentControlState"
-		, "SetParentControlState"
-		, "ToggleParentControlState"
-	)
-}
-
 class ProcessConf
 {
 	[string]$ConfPath;
@@ -51,16 +29,37 @@ class ProcessConf
 	}
 }
 
+class RemoteRegistry
+{
+	[Microsoft.Win32.RegistryKey]$oRemoteRegistry;
+
+	RemoteRegistry()
+	{
+		$Computer = [RegistryConfig]::RemoteComp;
+		$this.oRemoteRegistry = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey('CurrentUser', $Computer)
+	}
+
+	[void]SetBoolValue([string]$remoteKey, [string]$VarName, [bool]$Value)
+	{
+		$RegKey = $this.oRemoteRegistry.OpenSubKey($remoteKey.Replace("Registry::", "").Replace("HKEY_CURRENT_USER\", ""), $true)
+		$RegKey.SetValue($VarName, $Value, [Microsoft.Win32.RegistryValueKind]::DWORD)
+	}
+}
+
 class RegistryConfig
 {
 	hidden [string]$BaseKeyPath = 'Registry::HKEY_CURRENT_USER\Software\BGSoft';
 	hidden [string]$BaseMasksJSON = '["*Minecraft*"]';
 	
+	static [string]$RemoteComp = "WS-LENA";
+
 	[string] $ScriptConf;
 	[string] $TimeConf;
 	[string[]] $Masks;
 	[ProcessConf[]] $ProcessConf;
-	[bool]$ParentControlState;
+	[bool]$DoHomeWork;
+	[bool]$ParentControlTimeState;
+	[bool]$ParentControlSystemIsOn;
 
 	RegistryConfig()
 	{
@@ -103,19 +102,39 @@ class RegistryConfig
 			return $curMaskProperty.Masks | ConvertFrom-Json;
 		}
 
-		function GetActiveParentControl()
+		function GetHomeWorkMark()
 		{
-			$ParentControl = Get-ItemProperty -Path $this.TimeConf -name "ParentControlState" -ErrorAction silentlycontinue;
-			if ( $null -eq $ParentControl -or $ParentControl -eq "")
-			{ $ParentControl = New-ItemProperty -Path $this.TimeConf-name "ParentControlState" -Value 0; }
+			$DoHomework = Get-ItemProperty -Path $this.ScriptConf -name "DoHomework" -ErrorAction silentlycontinue;
+			if ( $null -eq $DoHomework -or $DoHomework -eq "")
+			{ $DoHomework = New-ItemProperty -Path $this.ScriptConf-name "DoHomework" -Value 0; }
 
-			return $ParentControl.ParentControlState;
+			return $DoHomework.DoHomework;
+		}
+
+		function GetActiveTimeParentControl()
+		{
+			$ParentControl = Get-ItemProperty -Path $this.TimeConf -name "ParentControlTimeState" -ErrorAction silentlycontinue;
+			if ( $null -eq $ParentControl -or $ParentControl -eq "")
+			{ $ParentControl = New-ItemProperty -Path $this.TimeConf-name "ParentControlTimeState" -Value 0; }
+
+			return $ParentControl.ParentControlTimeState;
+		}
+		
+		function GetActiveSystemParentControl()
+		{
+			$ParentControlActive = Get-ItemProperty -Path $this.ScriptConf -name "ParentControlSystemIsOn";
+			if ( $null -eq $ParentControlActive -or $ParentControlActive -eq "")
+			{ $ParentControlActive = New-ItemProperty -Path $this.ScriptConf-name "ParentControlSystemIsOn" -Value 0; }
+			
+			return $ParentControlActive.ParentControlSystemIsOn;
 		}
 		
 		$this.ScriptConf = GetScriptConf $this.BaseKeyPath;
 		$this.TimeConf = $this.ScriptConf + '\TIME';
 		$this.Masks = GetMask;
-		$this.ParentControlState = GetActiveParentControl;
+		$this.DoHomeWork = GetHomeWorkMark;
+		$this.ParentControlTimeState = GetActiveTimeParentControl;
+		$this.ParentControlSystemIsOn = GetActiveSystemParentControl;
 
 		foreach ($rChildPart in Get-ChildItem $this.ScriptConf | Where-Object { $_.PSChildName -like "PROF_*" })
 		{
@@ -171,19 +190,41 @@ class RegistryConfig
 		Remove-Item $curConfPath;
 	}
 
-	[Boolean]CheckDoHomework()
+	[Bool]GetDoHomework()
 	{
-		$rHWMark = Get-ItemProperty -Path $this.ScriptConf -name DoHomework -ErrorAction silentlycontinue
+		$rHWMark = Get-ItemProperty -Path $this.ScriptConf -name 'DoHomework' -ErrorAction silentlycontinue
 		if ( $null -eq $rHWMark -or $rHWMark -eq "" )
 		{
-			return 0
+			$this.DoHomeWork = $false;
 		}
 		else
 		{
-			return $rHWMark.DoHomework
+			$this.DoHomeWork = [bool]$rHWMark.DoHomework;
 		}
+
+		return $this.DoHomeWork;
 	}
 
+	[void]SetDoHomework([bool]$mark)
+	{
+		$this.DoHomeWork = $mark;
+		Set-ItemProperty -Path $this.ScriptConf -Name "DoHomework" -Value $mark;
+		$remoteRegistry = [RemoteRegistry]::new();
+		$remoteRegistry.SetBoolValue($this.ScriptConf, "DoHomework", $mark);
+	}
+
+	[bool]ToggleDoHomework([bool]$NewMark)
+	{
+		$curMark = $this.GetDoHomework();
+		if ($curMark -xor $NewMark)
+		{
+			$this.SetDoHomework($NewMark);
+			return $true;
+		}
+
+		return $false;
+	}
+	
 	[void]ClearDoHomework()
 	{
 		Remove-ItemProperty -Path $this.ScriptConf -name DoHomework -ErrorAction silentlycontinue
@@ -198,38 +239,87 @@ class RegistryConfig
 		[string]$sRet = $VarJSON | Get-ItemPropertyValue -name $VarName;
 		return $sRet
 	}
-	
-	[bool]GetParentControlState()
+		
+	[bool]GetParentControlTimeState()
 	{
-		$ParentControl = Get-ItemProperty -Path $this.TimeConf -name "ParentControlState";
+		$ParentControl = Get-ItemProperty -Path $this.TimeConf -name "ParentControlTimeState";
 		if ( $null -eq $ParentControl -or $ParentControl -eq "")
 		{
-			$this.ParentControlState = $false;
+			$this.ParentControlTimeState = $false;
 		}
 		else
 		{
-			$this.ParentControlState = $ParentControl.ParentControlState;
+			$this.ParentControlTimeState = $ParentControl.ParentControlTimeState;
 		}
 		
-		return $this.ParentControlState;
+		return $this.ParentControlTimeState;
 	}
 	
-	[void]SetParentControlState([bool]$state)
+	[void]SetParentControlTimeState([bool]$state)
 	{
-		$this.ParentControlState = $state;
-		Set-ItemProperty -Path $this.TimeConf -Name "ParentControlState" -Value $state;
+		$this.ParentControlTimeState = $state;
+		Set-ItemProperty -Path $this.TimeConf -Name "ParentControlTimeState" -Value $state;
 	}
 
-	[bool]ToggleParentControlState([bool]$NewState)
+	[bool]ToggleParentControlTimeState([bool]$NewState)
 	{
-		$curState = $this.GetParentControlState();
+		$curState = $this.GetParentControlTimeState();
 		if ($curState -xor $NewState)
 		{
-			$this.SetParentControlState($NewState);
+			$this.SetParentControlTimeState($NewState);
 			return $true;
 		}
 
 		return $false;
 	}
 
+	[bool]GetParentControlSystemActive()
+	{
+		$ParentControlActive = Get-ItemProperty -Path $this.ScriptConf -name "ParentControlSystemIsOn";
+		if ( $null -eq $ParentControlActive -or $ParentControlActive -eq "")
+		{
+			$this.ParentControlSystemIsOn = $false;
+		}
+		else
+		{
+			$this.ParentControlSystemIsOn = $ParentControlActive.ParentControlSystemIsOn;
+		}
+		
+		return $this.ParentControlSystemIsOn;
+	}
+
+	[void]SetParentControlSystemActive([bool]$is_on)
+	{
+		$this.ParentControlSystemIsOn = $is_on;
+		Set-ItemProperty -Path $this.ScriptConf -Name "ParentControlSystemIsOn" -Value $is_on;
+		$remoteRegistry = [RemoteRegistry]::new();
+		$remoteRegistry.SetBoolValue($this.ScriptConf, "ParentControlSystemIsOn", $is_on);
+	}
+
+	[bool]ToggleParentControlSystemActive([bool]$NewActiveState)
+	{
+		$curState = $this.GetParentControlSystemActive();
+		if ($curState -xor $NewActiveState)
+		{
+			$this.SetParentControlSystemActive($NewActiveState);
+			return $true;
+		}
+
+		return $false;
+	}
+
+	[void]ParentControlActiveToOn()
+	{
+		$this.SetParentControlSystemActive($true);
+	}
+
+	[void]ParentControlActiveToOff()
+	{
+		$this.SetParentControlSystemActive($false);
+	}
+
+	static [void]SetRemoteParam()
+	{
+
+	}
 }

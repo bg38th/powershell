@@ -1,13 +1,4 @@
-Using module  .\Registry.class.psm1
-
-@{
-	ModuleVersion          = "1.0.0.0"
-	Author                 = "Boris Gordon"
-	Copyright              = "38th.ru"
-	PowerShellVersion      = "7.0"
-	DotNetFrameworkVersion = "4.0"
-	FunctionsToExport      = "CheckWorkTime"
-}
+Using module  .\Registry.class.psd1
 
 class SimpleTimeInterval
 {

@@ -1,9 +1,6 @@
-Using module  .\TimeInterval.class.psm1
-Using module  .\Registry.class.psm1
-
+Using module  .\TimeInterval.class.psd1
+Using module  .\Registry.class.psd1
 Clear-Host
-#$ConstPath = "C:\Program Files (x86)\Minecraft Launcher\MinecraftLauncher.exe"
-
 function GetProcess([string[]]$arrMask)
 {
 	$PathS = @()
@@ -48,12 +45,12 @@ function GetProcessConf([RegistryConfig]$oRegConf, [string]$sProcessPath)
 	return $oRegConf.SetProcessConf($sProcessPath);
 }
 
-
 $oRegConfig = [RegistryConfig]::new();
+
 $oIntervalConfig = [TimeIntervalProcessor]::new($oRegConfig);
 $bIntervalActive = $oIntervalConfig.CheckWorkTime($null);
 # $bIntervalActive = $oIntervalConfig.CheckWorkTime("07.01.2021 21:01");
-$bParentControlUp = ($bIntervalActive -and -not ($oRegConfig.CheckDoHomework()));
+$bParentControlUp = ($bIntervalActive -and $oRegConfig.ParentControlSystemIsOn -and -not $oRegConfig.DoHomeWork);
 
 if ($bParentControlUp)
 {
@@ -95,5 +92,5 @@ else
 
 if (-not $bIntervalActive)
 {
-	$oRegConfig.ClearDoHomework();
+	$oRegConfig.ToggleDoHomework($false);
 }
