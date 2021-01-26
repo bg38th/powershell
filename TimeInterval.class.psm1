@@ -19,7 +19,7 @@ class TimeIntervalProcessor
 	hidden [string]$DefaultIntervalJSON = '[
    {num: 1, start: "00:00", end: "06:45"},
    {num: 2, start: "08:15", end: "14:10"},
-   {num: 3, start: "19:00", end: "21:00"},
+   {num: 3, start: "17:30", end: "19:30"},
    {num: 4, start: "21:30", end: "23:59:59.9999999"},
    {num: 5, start: "22:30", end: "23:59:59.9999999"}
 ]'
@@ -27,7 +27,7 @@ class TimeIntervalProcessor
 	hidden [string]$constConfigJSON = '[
    {day: 0, times: ["default_1", "default_3", "default_4"]},
    {day: 1, times: ["default_1", "default_2", "default_3", "default_4"]},
-   {day: 2, times: ["default_1", {start: "08:15", end: "14:10"},"default_3", "default_4"]},
+   {day: 2, times: ["default_1", {start: "08:15", end: "13:10"},"default_3", "default_4"]},
    {day: 3, times: ["default_1", "default_2", "default_3", "default_4"]},
    {day: 4, times: ["default_1", "default_2", "default_3", "default_4"]},
    {day: 5, times: ["default_1", "default_2", "default_5"]},
