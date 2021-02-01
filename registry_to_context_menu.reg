@@ -1,0 +1,13 @@
+﻿Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\Directory\shell\Run Name To Russian]
+@ = "& Name To Russian"
+
+[HKEY_CLASSES_ROOT\Directory\shell\Run Name To Russian\command]
+@ = "\"C:\Program Files\PowerShell\7\pwsh.exe\" V:\\Projects\\GIT\\Powershell\\powershell\\rename_to_rus.ps1 \"%1\""
+
+[HKEY_CLASSES_ROOT\*\shell\Run Name To Russian]
+@ = "& Name To Russian"
+
+[HKEY_CLASSES_ROOT\*\shell\Run Name To Russian\command]
+@ = "\"C:\Program Files\PowerShell\7\pwsh.exe\" V:\\Projects\\GIT\\Powershell\\powershell\\rename_to_rus.ps1 \"%1\""

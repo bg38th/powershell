@@ -7,7 +7,7 @@ class ParentControlGUI : System.Windows.Forms.Form
         # Add-Type -AssemblyName System.Windows.Forms
         [System.Windows.Forms.Application]::EnableVisualStyles()
 
-        $this.ClientSize = New-Object System.Drawing.Point(350, 160)
+        $this.ClientSize = New-Object System.Drawing.Point(350, 200)
         $this.text = "Управление ParentControl"
         $this.TopMost = $false
         
@@ -31,11 +31,28 @@ class ParentControlGUI : System.Windows.Forms.Form
         $cbDisableParentControl.Font = New-Object System.Drawing.Font('Microsoft Sans Serif', 10)
         $cbDisableParentControl.Checked = -not $oRegConfig.ParentControlSystemIsOn;
 
-        $this.Controls.AddRange(@($cbDoHomeWork, $cbDisableParentControl))
+        $cbLockComp = New-Object System.Windows.Forms.Button
+        $cbLockComp.text = "Блокировка компа"
+        $cbLockComp.AutoSize = $true
+        $cbLockComp.width = 195
+        $cbLockComp.height = 20
+        $cbLockComp.location = New-Object System.Drawing.Point(40, 122)
+        $cbLockComp.Font = New-Object System.Drawing.Font('Microsoft Sans Serif', 10)
+
+        $cbUnLockComp = New-Object System.Windows.Forms.Button
+        $cbUnLockComp.text = "Разблокировка компа"
+        $cbUnLockComp.AutoSize = $true
+        $cbUnLockComp.width = 195
+        $cbUnLockComp.height = 20
+        $cbUnLockComp.location = New-Object System.Drawing.Point(40, 163)
+        $cbUnLockComp.Font = New-Object System.Drawing.Font('Microsoft Sans Serif', 10)
+
+        $this.Controls.AddRange(@($cbDoHomeWork, $cbDisableParentControl, $cbLockComp, $cbUnLockComp))
 
         $cbDoHomeWork.Add_Click( { [ParentControlGUI]::doCheckBox('homework', $this); });
         $cbDisableParentControl.Add_Click( { [ParentControlGUI]::doCheckBox('system', $this); });
-        
+        $cbLockComp.Add_Click( { [ParentControlGUI]::doButton('lock'); });
+        $cbUnLockComp.Add_Click( { [ParentControlGUI]::doButton('unlock'); });
     }
 
     static [void]doCheckBox([string]$type, [system.Windows.Forms.CheckBox]$curCheckBox)
@@ -58,4 +75,20 @@ class ParentControlGUI : System.Windows.Forms.Form
         Write-Host $curCheckBox.Text ---> $curCheckBox.CheckState ---> $curCheckBox.Checked;
     }
 
+    static [void]doButton([string]$type)
+    {
+        $Comp = "WS-LENA"
+        switch ($type)
+        {
+            'lock'
+            {
+                Invoke-Command -ComputerName $Comp -ScriptBlock { Disable-LocalUser -Name "lena" }
+                Invoke-Command -ComputerName $Comp -ScriptBlock { Start-ScheduledTask -TaskName "\Local\lock" }
+            }
+            'unlock'
+            {
+                Invoke-Command -ComputerName $Comp -ScriptBlock { Enable-LocalUser -Name "lena" }
+            }
+        }
+    }
 }
