@@ -4,6 +4,8 @@
     $ServiceSubstring = @(
         "1080p",
         "720p",
+        "\[720p\]",
+        "x264",
         "hd720p",
         "divx",
         "xvid",
@@ -26,7 +28,11 @@
         "and",
         "rus",
         "eng",
-        "ws"
+        "dub",
+        "ws",
+        "mvo",
+        "dvo",
+        "2xdvo"
     );   
     $arrOutStr = @(); 
     $arrInString = $inString -split '\.';
@@ -39,7 +45,12 @@
             continue;
         }
 
-        $arrOutStr += $itemInString;
+        if ($itemInString -match "S\d\dE\d\d") {
+            $itemInString = $itemInString -replace "S", "Book "
+            $itemInString = $itemInString -replace "E", " Episod "
+        }
+
+        $arrOutStr += SplitByUppercase($itemInString);
     }
 
     return $arrOutStr -join '.'
@@ -77,7 +88,7 @@ function simpleReplace {
         "\.files-x",
         "\.Seryy1779",
         "\.AVC",
-        "-Kinozal\.TV",
+        "-kinozal\.tv",
         "\.perevod",
         "\.kuraj-bambey",
         "\.rip",
@@ -85,7 +96,12 @@ function simpleReplace {
         "\.casstudio",
         "\.lizard",
         "\.\(qqss44\)",
-        "\.\[qqss44\]"
+        "\.\[qqss44\]",
+        "\.olegek70",
+        "\.exkinoray",
+        "\.subs-green",
+        "\.subs",
+        "\.\[Hi10P\]"
     );  
     foreach ($itemRepl in $ReplaceSubstring) {
         $inString = $inString -replace $itemRepl, ""; 
@@ -138,6 +154,8 @@ function PostProcessing {
     $PostReplace["сериа"] = " серия";
     $PostReplace["могикиан"] = "Магикян";
     $PostReplace["шерлоцк"] = "Шерлок";
+    $PostReplace["Йонес"] = "Джонс";
+    $PostReplace["Маша.и. Медвед"] = "Маша и Медведь";
 
     foreach ($rpl in $PostReplace.Keys) {
         $inString = $inString -creplace $rpl, $PostReplace[$rpl];
@@ -156,6 +174,9 @@ function PreProcessing {
 
     $PreReplace["The\.Big\.Bang\.Theory"] = "Теория большого взрыва";
     $PreReplace["TBBT"] = "Теория большого взрыва";
+
+    $PreReplace["\[Korra-Avatar\]_"] = "";
+    $PreReplace["\[Korra-Avatar_&_Pokemon-Alliance\]_"] = "";
 
     foreach ($rpl in $PreReplace.Keys) {
         $inString = $inString -creplace $rpl, $PreReplace[$rpl];
@@ -212,6 +233,7 @@ function TranslitRU2LAT {
         [char]'t' = "т"; [char]'T' = " Т";
         [char]'u' = "у"; [char]'U' = " У";
         [char]'f' = "ф"; [char]'F' = " Ф";
+        [char]'h' = "х"; [char]'H' = " Х";
         [char]'c' = "ц"; [char]'C' = " Ц";
         [char]'y' = "ы"; [char]'Y' = " Ы";
         #[char]'y' = "й"; [char]'Y' = " Й";
@@ -247,15 +269,40 @@ function TranslitRU2LAT {
     return $outChars
 }
 
+function SplitByUppercase {
+    param([string]$inString)
+    $arrConstUppercase = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЭЮЯ".ToCharArray();
+    
+    $InArrChars = $inString.ToCharArray();
+
+    $outChars = "";
+    $hasSpace = $true;
+    $isFirst = $true;
+    foreach ($chr in $InArrChars) {
+        if ($arrConstUppercase -ccontains $chr) {
+            $outChars += (-not $hasSpace ? " " : "") + ($isFirst ? $chr : $chr.ToString().ToLower());
+        }
+        else {
+            $outChars += $chr;
+        }
+        $isFirst = $false;
+        $hasSpace = ($chr -eq ' ');
+    }
+
+    return $outChars;
+}
+
 Clear-Host
 
 
 $path = $args[0]
 if ($null -eq $path) {
-    $path = "Y:\\Сериалы\Теория Большого взрыва\9\TBBT.S09E17.XviD.KB.[qqss44].avi";
+    $path = "\\NAS\Torrent\Аватар Легенда о Корре Сезон 1\The.Legend.of.Korra.S01E02.BDRip.720p.DUB.MVO.DVO.ENG.Subs-Green.mkv";
 }
 Write-Host $path;
 Pause
+
+$doTranslit = $false;
 
 foreach ($file in Get-ChildItem -LiteralPath $path -Recurse -File) {
     $newPath = $file;
@@ -265,7 +312,7 @@ foreach ($file in Get-ChildItem -LiteralPath $path -Recurse -File) {
     $TransName1 = simpleReplace($TransName0)
     $TransName2 = removeServiceSubstring($TransName1)
     $TransName3 = TranslitRU2LAT($TransName2)
-    $TransName4 = $TransName3.trim();
+    $TransName4 = $doTranslit ? $TransName3.trim() : $TransName2.trim();
     $NewName = PostProcessing($TransName4);
     $newPath = $newPath -creplace $maskedOldName, $NewName;
     if ($newPath -ne $file) {
