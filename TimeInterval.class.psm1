@@ -1,19 +1,17 @@
 Using module  .\Registry.class.psd1
+Using module  .\SQL.class.psd1
 
-class SimpleTimeInterval
-{
+class SimpleTimeInterval {
 	[string]$start;
 	[string]$end;
 }
 
-class DayTimeProfile
-{
+class DayTimeProfile {
 	[int]$day;
 	[SimpleTimeInterval[]]$times;
 }
 
-class TimeIntervalProcessor
-{
+class TimeIntervalProcessor {
 	[DayTimeProfile[]]$Config;
 
 	hidden [string]$DefaultIntervalJSON = '[
@@ -34,31 +32,25 @@ class TimeIntervalProcessor
    {day: 6, times: ["default_1", "default_5"]}
 ]'
 
-	[bool]CheckWorkTime($curDayParam)
-	{
-		function GetCurConfItem($curDay, $timeConfig)
-		{
+	[bool]CheckWorkTime($curDayParam) {
+		function GetCurConfItem($curDay, $timeConfig) {
 			$curConfItem = $timeConfig.where( { $_.day -eq $curDay.DayOfWeek })
 			return $curConfItem.times
 		}
 		
-		if ( $null -eq $curDayParam )
-		{
+		if ( $null -eq $curDayParam ) {
 			$curDay = Get-Date;
 		}
-		else
-		{
+		else {
 			$curDay = Get-Date -Date $curDayParam;
 		}
 
 		$curTime = Get-Date -Date $curDay -Format t
 
 		$curConfItem = GetCurConfItem $curDay $this.Config
-		if ($curConfItem.Count -ne 0)
-		{
+		if ($curConfItem.Count -ne 0) {
 			$curInterval = $curConfItem.where( { ([datetime]$curTime -ge [datetime]$_.start) -and ([datetime]$curTime -le [datetime]$_.end) })
-			if ($curInterval.Count -ne 0)
-			{
+			if ($curInterval.Count -ne 0) {
 				return $true
 			}
 		}
@@ -66,16 +58,12 @@ class TimeIntervalProcessor
 		return $false
 	}
 	
-	TimeIntervalProcessor([RegistryConfig]$oRegConf)
-	{
+	TimeIntervalProcessor([RegistryConfig]$oRegConf) {
 		$TimeDefault = $oRegConf.GetTimeConfigJSON("DefaultInterval", $this.DefaultIntervalJSON) | ConvertFrom-Json;
 		$TimeConfig = $oRegConf.GetTimeConfigJSON("Config", $this.constConfigJSON) | ConvertFrom-Json;
-		foreach ($itemTimeProfile in $TimeConfig)
-		{
-			for ($j = 0; $j -lt $itemTimeProfile.times.length ; $j++ )
-			{
-				If ($itemTimeProfile.times[$j].GetType().Name -eq "String" -and $itemTimeProfile.times[$j] -like "default_*")
-				{
+		foreach ($itemTimeProfile in $TimeConfig) {
+			for ($j = 0; $j -lt $itemTimeProfile.times.length ; $j++ ) {
+				If ($itemTimeProfile.times[$j].GetType().Name -eq "String" -and $itemTimeProfile.times[$j] -like "default_*") {
 					$numStr = $itemTimeProfile.times[$j] -replace "default_", ""
 					$num = [convert]::ToInt32($numStr, 10)
 					$curDefaultInterval = $TimeDefault.where( { $_.num -eq $num })

@@ -1,9 +1,8 @@
 Using module  .\Registry.class.psd1
+Using module  .\SQL.class.psd1
 
-class ParentControlGUI : System.Windows.Forms.Form
-{
-    ParentControlGUI()
-    {
+class ParentControlGUI : System.Windows.Forms.Form {
+    ParentControlGUI() {
         # Add-Type -AssemblyName System.Windows.Forms
         [System.Windows.Forms.Application]::EnableVisualStyles()
 
@@ -11,7 +10,7 @@ class ParentControlGUI : System.Windows.Forms.Form
         $this.text = "Управление ParentControl"
         $this.TopMost = $false
         
-        $oRegConfig = [RegistryConfig]::new();
+        $oStoreConfig = [RegistryConfig]::new();
 
         $cbDoHomeWork = New-Object system.Windows.Forms.CheckBox;
         $cbDoHomeWork.text = "Задания выполнены";
@@ -55,19 +54,15 @@ class ParentControlGUI : System.Windows.Forms.Form
         $cbUnLockComp.Add_Click( { [ParentControlGUI]::doButton('unlock'); });
     }
 
-    static [void]doCheckBox([string]$type, [system.Windows.Forms.CheckBox]$curCheckBox)
-    {
-        $oRegConfig = [RegistryConfig]::new();
+    static [void]doCheckBox([string]$type, [system.Windows.Forms.CheckBox]$curCheckBox) {
+        $oStoreConfig = [RegistryConfig]::new();
 
-        switch ($type)
-        {
-            'homework'
-            {
+        switch ($type) {
+            'homework' {
                 $checked = $curCheckBox.Checked;
                 $oRegConfig.ToggleDoHomework($checked)
             }
-            'system'
-            {
+            'system' {
                 $checked = -not $curCheckBox.Checked;
                 $oRegConfig.ToggleParentControlSystemActive($checked)
             }
@@ -75,18 +70,14 @@ class ParentControlGUI : System.Windows.Forms.Form
         Write-Host $curCheckBox.Text ---> $curCheckBox.CheckState ---> $curCheckBox.Checked;
     }
 
-    static [void]doButton([string]$type)
-    {
+    static [void]doButton([string]$type) {
         $Comp = "WS-LENA"
-        switch ($type)
-        {
-            'lock'
-            {
+        switch ($type) {
+            'lock' {
                 Invoke-Command -ComputerName $Comp -ScriptBlock { Disable-LocalUser -Name "lena" }
                 Invoke-Command -ComputerName $Comp -ScriptBlock { Start-ScheduledTask -TaskName "\Local\lock" }
             }
-            'unlock'
-            {
+            'unlock' {
                 Invoke-Command -ComputerName $Comp -ScriptBlock { Enable-LocalUser -Name "lena" }
             }
         }

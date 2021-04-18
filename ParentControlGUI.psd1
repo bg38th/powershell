@@ -16,6 +16,11 @@
 			ModuleName    = ".\Registry.class.psd1"; 
 			ModuleVersion = "1.0.0.0"; 
 			Guid          = "2dc64c35-9152-413a-ba22-ca11837a041d";
+		},
+		@{
+			ModuleName    = ".\SQL.class.psd1"; 
+			ModuleVersion = "1.0.0.0"; 
+			Guid          = "b529f59a-2bc5-4c8c-9a39-debc47603201";
 		}
 	)
 	RequiredAssemblies     = @("System.Windows.Forms")

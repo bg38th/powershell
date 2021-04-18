@@ -5,13 +5,13 @@ Add-Type –Path "C:\Windows\System32\MySql.NETCORE\MySql.Data.dll"
 $Connection = [MySql.Data.MySqlClient.MySqlConnection]@{ConnectionString = 'server=192.168.98.247;Port=3307;uid=bgsoft;pwd=KbcnUytd!1;database=bgsoft' }
 $sql = New-Object MySql.Data.MySqlClient.MySqlCommand
 $sql.Connection = $Connection
-$sql.CommandText = "select * from users";
+$sql.CommandText = "select * from flags";
 $Connection.Open()
  
 $RS = $sql.ExecuteReader();
 
 while ($RS.Read()) {
-	Write-Host $RS["fullname"]];
+	Write-Host $RS["name"] $RS["value"] ;
 }
 
 

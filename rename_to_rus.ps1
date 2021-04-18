@@ -25,6 +25,7 @@
         "hdtv",
         "kb",
         "by",
+        "lf",
         "and",
         "rus",
         "eng",
@@ -62,6 +63,9 @@ function simpleReplace {
     $ReplaceSubstring = @(
         "\.\(alexicus\)",
         "\.alexfilm",
+        "\.lostlilm",
+        "\.lostfilm",
+        "\.RGzsRutracker",
         "\.ruuu",
         "\.vagon4eg",
         "\.nas",
@@ -96,12 +100,18 @@ function simpleReplace {
         "\.casstudio",
         "\.lizard",
         "\.\(qqss44\)",
+        "\.\(1080p\)",
         "\.\[qqss44\]",
         "\.olegek70",
         "\.exkinoray",
         "\.subs-green",
         "\.subs",
-        "\.\[Hi10P\]"
+        "\.\[hi10p\]",
+        "\.web-dlrip",
+        "\.web-dl",
+        "\.nikolspup",
+        "\.  files-x",
+        "\.Сибиряк"
     );  
     foreach ($itemRepl in $ReplaceSubstring) {
         $inString = $inString -replace $itemRepl, ""; 
@@ -297,7 +307,7 @@ Clear-Host
 
 $path = $args[0]
 if ($null -eq $path) {
-    $path = "\\NAS\Torrent\Аватар Легенда о Корре Сезон 1\The.Legend.of.Korra.S01E02.BDRip.720p.DUB.MVO.DVO.ENG.Subs-Green.mkv";
+    $path = "\\NAS\Video\Сериалы\Ивановы Ивановы\Сезон 3\Ivanovy.Ivanovy.S.03.(01.seriya).WEB-DL.(1080p).mkv";
 }
 Write-Host $path;
 Pause
