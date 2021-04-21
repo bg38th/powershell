@@ -29,7 +29,7 @@ class RemoteRegistry {
 	[Microsoft.Win32.RegistryKey]$oRemoteRegistry;
 
 	RemoteRegistry() {
-		$Computer = [RegistryConfig]::RemoteComp;
+		$Computer = [StorageConfig]::RemoteComp;
 		$this.oRemoteRegistry = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey('CurrentUser', $Computer)
 	}
 
@@ -39,7 +39,9 @@ class RemoteRegistry {
 	}
 }
 
-class RegistryConfig {
+class StorageConfig {
+	hidden [string]$type = 'reg';
+
 	hidden [string]$BaseKeyPath = 'Registry::HKEY_CURRENT_USER\Software\BGSoft';
 	hidden [string]$BaseMasksJSON = '["*Minecraft*"]';
 	
@@ -53,7 +55,7 @@ class RegistryConfig {
 	[bool]$ParentControlTimeState;
 	[bool]$ParentControlSystemIsOn;
 
-	RegistryConfig() {
+	StorageConfig() {
 		function GetScriptConf([string]$BaseKey) {
 			$bHasMainKey = Test-Path -Path $BaseKey;
 			$sTimeKey = $BaseKey + '\TIME';
@@ -126,6 +128,10 @@ class RegistryConfig {
 			$sMaskFileName = [string]$curKeyChildProcess."newFileName";
 			$this.ProcessConf += [ProcessConf]::new($rChildPart, $ChildProcessPath, $sNativeFileName, $sMaskFileName);
 		}
+	}
+
+	[string] GetType() {
+		return $this.type;
 	}
 
 	[ProcessConf]GetProcessConf([string]$sFullProcessPath) {
@@ -206,7 +212,7 @@ class RegistryConfig {
 		[string]$sRet = $VarJSON | Get-ItemPropertyValue -Name $VarName;
 		return $sRet
 	}
-		
+
 	[bool]GetParentControlTimeState() {
 		$ParentControl = Get-ItemProperty -Path $this.TimeConf -Name "ParentControlTimeState";
 		if ( $null -eq $ParentControl -or $ParentControl -eq "") {

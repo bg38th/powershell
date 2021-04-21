@@ -53,16 +53,16 @@ function GetCriptFileName([string]$rProcessConf) {
 	return $sFileName
 }
 
-$oStoreConfig = [RegistryConfig]::new();
+$oStoreConfig = [StorageConfig]::new();
 
-$sFullProcessPath = GetProcess $oRegConfig.Mask
+$sFullProcessPath = GetProcess $oStoreConfig.Mask
 
 if ($null -ne $sFullProcessPath) {
 
 	$sFilePath = Split-Path $sFullProcessPath
 	#$sFileName = Split-Path $sFullProcessPath -Leaf
 
-	$rProcessConf = GetProcessConf $oRegConfig.ScriptConfig $sFullProcessPath
+	$rProcessConf = GetProcessConf $oStoreConfig.ScriptConfig $sFullProcessPath
 	$sNewFileName = SetFCriptFileName $rProcessConf
 
 	Write-Host $sFullProcessPath

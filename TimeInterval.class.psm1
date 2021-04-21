@@ -1,9 +1,13 @@
-Using module  .\Registry.class.psd1
+# Using module  .\Registry.class.psd1
 Using module  .\SQL.class.psd1
-
 class SimpleTimeInterval {
 	[string]$start;
 	[string]$end;
+
+	SimpleTimeInterval([string]$start, [string]$end) {
+		$this.start = $start;
+		$this.end = $end;
+	}
 }
 
 class DayTimeProfile {
@@ -58,20 +62,34 @@ class TimeIntervalProcessor {
 		return $false
 	}
 	
-	TimeIntervalProcessor([RegistryConfig]$oRegConf) {
-		$TimeDefault = $oRegConf.GetTimeConfigJSON("DefaultInterval", $this.DefaultIntervalJSON) | ConvertFrom-Json;
-		$TimeConfig = $oRegConf.GetTimeConfigJSON("Config", $this.constConfigJSON) | ConvertFrom-Json;
-		foreach ($itemTimeProfile in $TimeConfig) {
-			for ($j = 0; $j -lt $itemTimeProfile.times.length ; $j++ ) {
-				If ($itemTimeProfile.times[$j].GetType().Name -eq "String" -and $itemTimeProfile.times[$j] -like "default_*") {
-					$numStr = $itemTimeProfile.times[$j] -replace "default_", ""
-					$num = [convert]::ToInt32($numStr, 10)
-					$curDefaultInterval = $TimeDefault.where( { $_.num -eq $num })
-					# $itemTimeProfile.times[$j] = @{start = $curDefaultInterval.start; end = $curDefaultInterval.end };
-					$itemTimeProfile.times[$j] = '{start: "' + $curDefaultInterval.start + '", end: "' + $curDefaultInterval.end + '"}' | ConvertFrom-Json;
+	TimeIntervalProcessor([StorageConfig]$oStoreConf) {
+		$storeType = $oStoreConf.GetType();
+		if ($storeType -eq 'reg') {
+			$TimeDefault = $oStoreConf.GetTimeConfigJSON("DefaultInterval", $this.DefaultIntervalJSON) | ConvertFrom-Json;
+			$TimeConfig = $oStoreConf.GetTimeConfigJSON("Config", $this.constConfigJSON) | ConvertFrom-Json;
+			foreach ($itemTimeProfile in $TimeConfig) {
+				for ($j = 0; $j -lt $itemTimeProfile.times.length ; $j++ ) {
+					If ($itemTimeProfile.times[$j].GetType().Name -eq "String" -and $itemTimeProfile.times[$j] -like "default_*") {
+						$numStr = $itemTimeProfile.times[$j] -replace "default_", ""
+						$num = [convert]::ToInt32($numStr, 10)
+						$curDefaultInterval = $TimeDefault.where( { $_.num -eq $num })
+						# $itemTimeProfile.times[$j] = @{start = $curDefaultInterval.start; end = $curDefaultInterval.end };
+						$itemTimeProfile.times[$j] = '{start: "' + $curDefaultInterval.start + '", end: "' + $curDefaultInterval.end + '"}' | ConvertFrom-Json;
+					}
 				}
+				$this.Config += $itemTimeProfile;
 			}
-			$this.Config += $itemTimeProfile;
+		}
+		elseif ($storeType -eq 'sql') {
+			foreach ($item in $oStoreConf.GetTimeConfiguration()) {
+				$cutDayProfile = [DayTimeProfile]::new();
+				$cutDayProfile.day = $item.day;
+				foreach ($itemTime in $item.times) {
+					$end = if($itemTime.end -eq "00:00"){"23:59:59.9999999"}else{$itemTime.end};
+					$cutDayProfile.times += [SimpleTimeInterval]::new($itemTime.start, $end);
+				}
+				$this.Config += $cutDayProfile;
+			}
 		}
 	}
 }

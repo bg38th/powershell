@@ -1,3 +1,12 @@
+class StorageConfig {
+
+	hidden [string]$sServerAddr = '192.168.98.247';
+	hidden [string]$sServerPort = '3307';
+	hidden [string]$sDataBase = 'bgsoft';
+	hidden [string]$sUser = 'bgsoft';
+	hidden [string]$sPwd = 'KbcnUytd!1';
+
+}
 #подключаем библиотеку MySql.Data.dll
 Add-Type –Path "C:\Windows\System32\MySql.NETCORE\MySql.Data.dll"
 # строка подключения к БД, server - имя севрера, uid - имя mysql пользователя, pwd- пароль, database - имя БД на сервере

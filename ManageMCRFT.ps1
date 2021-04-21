@@ -1,5 +1,5 @@
 Using module  .\TimeInterval.class.psd1
-Using module  .\Registry.class.psd1
+# Using module  .\Registry.class.psd1
 Using module  .\SQL.class.psd1
 Clear-Host
 function GetProcess([string[]]$arrMask) {
@@ -29,24 +29,24 @@ function GetProcess([string[]]$arrMask) {
 	return @{PathS = $PathS; IDs = $IDs }
 }
 
-function GetProcessConf([RegistryConfig]$oRegConf, [string]$sProcessPath) {
-	$oProcessConf = $oRegConf.GetProcessConf($sProcessPath);
+function GetProcessConf([StorageConfig]$oStoreConf, [string]$sProcessPath) {
+	$oProcessConf = $oStoreConf.GetProcessConf($sProcessPath);
 	if ($null -ne $oProcessConf) {
 		return $oProcessConf
 	}
 
-	return $oRegConf.SetProcessConf($sProcessPath);
+	return $oStoreConf.SetProcessConf($sProcessPath);
 }
 
-$oStoreConfig = [RegistryConfig]::new();
+$oStoreConfig = [StorageConfig]::new();
 
-$oIntervalConfig = [TimeIntervalProcessor]::new($oRegConfig);
+$oIntervalConfig = [TimeIntervalProcessor]::new($oStoreConfig);
 $bIntervalActive = $oIntervalConfig.CheckWorkTime($null);
 # $bIntervalActive = $oIntervalConfig.CheckWorkTime("07.01.2021 21:01");
-$bParentControlUp = ($bIntervalActive -and $oRegConfig.ParentControlSystemIsOn -and -not $oRegConfig.DoHomeWork);
+$bParentControlUp = ($bIntervalActive -and $oStoreConfig.ParentControlSystemIsOn -and -not $oStoreConfig.DoHomeWork);
 
 if ($bParentControlUp) {
-	$oProcesses = GetProcess $oRegConfig.Masks
+	$oProcesses = GetProcess $oStoreConfig.Masks
 
 	foreach ($item in $oProcesses.IDs) {
 		Stop-Process -Id $item -Force
@@ -55,7 +55,7 @@ if ($bParentControlUp) {
 	foreach ($sFullProcessPath in $oProcesses.PathS) {
 		$oProcessConf = GetProcessConf $oStoreConfig $sFullProcessPath
 		if (Test-Path $sFullProcessPath) {
-			$sNewFileName = $oRegConfig.SetMaskFileName($oProcessConf);
+			$sNewFileName = $oStoreConfig.SetMaskFileName($oProcessConf);
 			Rename-Item -Path $sFullProcessPath -NewName $sNewFileName
 			Write-Host "Move: " $sFullProcessPath
 		}
@@ -65,17 +65,17 @@ if ($bParentControlUp) {
 	}
 }
 else {
-	foreach ($oChildPart in $oRegConfig.ProcessConf ) {
+	foreach ($oChildPart in $oStoreConfig.ProcessConf ) {
 		$FilePath = Split-Path $oChildPart.ProcessPath;
 		$SourcePath = $FilePath + '\' + $oChildPart.MaskFileName
 		Rename-Item -Path $SourcePath -NewName $oChildPart.NativeFileName
 
 		Write-Host $oChildPart.NativeFileName " восстановлен"
 
-		$oRegConfig.RemoveProcessConf($oChildPart);
+		$oStoreConfig.RemoveProcessConf($oChildPart);
 	}
 }
 
 if (-not $bIntervalActive) {
-	$oRegConfig.ToggleDoHomework($false);
+	$oStoreConfig.ToggleDoHomework($false);
 }

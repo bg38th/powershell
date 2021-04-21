@@ -7,22 +7,22 @@
 	DotNetFrameworkVersion = "4.0"
 	GUID                   = 'b529f59a-2bc5-4c8c-9a39-debc47603201'
 	VariablesToExport      = '*'
+	RequiredAssemblies     = @("C:\Windows\System32\MySql.NETCORE\MySql.Data.dll")
+	# NestedModules          = @('C:\Windows\System32\MySql.NETCORE\MySql.Data.dll')
+	# NestedModules          = @('.\AddType.psm1')
+	# ScriptsToProcess       = @('.\AddType.ps1')
 	FunctionsToExport      = @(
-		"GetDoHomework"
-		, "SetDoHomework"
-		, "ToggleDoHomework"
-		, "ClearDoHomework"
+		"GetType"
 		, "GetProcessConf"
 		, "SetProcessConf"
 		, "SetMaskFileName"
 		, "RemoveProcessConf"
-		, "GetTimeConfigJSON"
+		, "GetDoHomework"
+		, "SetDoHomework"
+		, "ToggleDoHomework"
 		, "GetParentControlTimeState"
 		, "SetParentControlTimeState"
 		, "ToggleParentControlTimeState"
-		, "GetParentControlSystemActive"
-		, "SetParentControlSystemActive"
-		, "ParentControlActiveToOn"
-		, "ParentControlActiveToOff"
+		, "GetTimeConfiguration"
 	)
 }

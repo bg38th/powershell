@@ -24,5 +24,6 @@
 		, "SetParentControlSystemActive"
 		, "ParentControlActiveToOn"
 		, "ParentControlActiveToOff"
+		, "GetType"
 	)
 }
