@@ -51,10 +51,10 @@ class ParentControlGUI : System.Windows.Forms.Form {
 
         $LinkLabel = New-Object System.Windows.Forms.LinkLabel
         $LinkLabel.Location = New-Object System.Drawing.Point(40, 100)
-        # $LinkLabel.Size = New-Object System.Drawing.Size(150,20)
+        $LinkLabel.Size = New-Object System.Drawing.Size(150,20)
         $LinkLabel.LinkColor = "BLUE"
         $LinkLabel.ActiveLinkColor = "RED"
-        $LinkLabel.Text = "Manage"
+        $LinkLabel.Text = "Настройка..."
         $LinkLabel.Font = New-Object System.Drawing.Font('Microsoft Sans Serif', 14)
         $LinkLabel.add_Click( { [system.Diagnostics.Process]::start('"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"', "http://bgsoft.lan") })
 
