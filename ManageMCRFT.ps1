@@ -53,6 +53,7 @@ if ($bParentControlUp) {
 	}
 
 	foreach ($sFullProcessPath in $oProcesses.PathS) {
+		New-WinEvent -ProviderName 'Microsoft-Windows-PowerShell' -Id 4101 -Payload @('Parent Control: Завершен процесс. ', $sFullProcessPath, '');
 		$oProcessConf = GetProcessConf $oStoreConfig $sFullProcessPath
 		if (Test-Path $sFullProcessPath) {
 			$sNewFileName = $oStoreConfig.SetMaskFileName($oProcessConf);
@@ -69,6 +70,7 @@ else {
 		$FilePath = Split-Path $oChildPart.ProcessPath;
 		$SourcePath = $FilePath + '\' + $oChildPart.MaskFileName
 		Rename-Item -Path $SourcePath -NewName $oChildPart.NativeFileName
+		New-WinEvent -ProviderName 'Microsoft-Windows-PowerShell' -Id 4100 -Payload @('Parent Control: Восстановлен процесс. ', $oChildPart.NativeFileName, '');
 
 		Write-Host $oChildPart.NativeFileName " восстановлен"
 
