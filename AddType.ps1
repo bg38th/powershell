@@ -1,1 +1,0 @@
-Add-Type –Path "C:\Windows\System32\MySql.NETCORE\MySql.Data.dll"
