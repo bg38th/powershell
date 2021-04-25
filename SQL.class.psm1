@@ -178,7 +178,7 @@ class StorageConfig {
 		$num = $this.SQLCommand.ExecuteScalar();
 
 		$oProcessConf = [ProcessConf]::new($num, $sFullProcessPath, $sFileName);
-		$curProcessConf = GetFromArray($this.ProcessConf, $num)
+		$curProcessConf = GetFromArray $this.ProcessConf $num
 		if ($null -eq $curProcessConf) {
 			$this.ProcessConf += $oProcessConf;
 			return $oProcessConf;
@@ -217,7 +217,7 @@ class StorageConfig {
 
 	[bool]SetDoHomework([bool]$mark) {
 		$this.DoHomeWork = $mark;
-		if($mark){$mark_sql = 1}else{$mark_sql = 0}
+		if ($mark) { $mark_sql = 1 }else { $mark_sql = 0 }
 		$this.SQLCommand.CommandText = "UPDATE flags SET value = '" + $mark_sql + "' where user_id = " + $this.user_id + " and name = 'homework'";
 		return $this.SQLCommand.ExecuteNonQuery();
 	}
@@ -242,7 +242,7 @@ class StorageConfig {
 	
 	[bool]SetParentControlTimeState([bool]$state) {
 		$this.ParentControlTimeState = $state;
-		if($state){$state_sql = 1}else{$state_sql = 0}
+		if ($state) { $state_sql = 1 }else { $state_sql = 0 }
 		$this.SQLCommand.CommandText = "UPDATE flags SET value = '" + $state_sql + "' where user_id = " + $this.user_id + " and name = 'timestate'";
 		return $this.SQLCommand.ExecuteNonQuery();
 	}
