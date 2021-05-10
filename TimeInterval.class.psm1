@@ -89,7 +89,7 @@ class TimeIntervalProcessor {
 				$cutDayProfile = [DayTimeProfile]::new();
 				$cutDayProfile.day = $item.day;
 				foreach ($itemTime in $item.times) {
-					$end = if ($itemTime.end -eq "00:00") { "23:59:59.9999999" }else { $itemTime.end };
+					$end = if ($itemTime.end -eq "00:00") { "23:59:59.9999999" } else { $itemTime.end };
 					$cutDayProfile.times += [SimpleTimeInterval]::new($itemTime.start, $end);
 				}
 				$this.Config += $cutDayProfile;

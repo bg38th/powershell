@@ -1,3 +1,5 @@
+Using module  .\SystemFunc.class.psd1
+
 class SimpleTimeInterval {
 	[string]$start;
 	[string]$end;
@@ -11,6 +13,16 @@ class SimpleTimeInterval {
 class DayTimeProfile {
 	[int]$day;
 	[SimpleTimeInterval[]]$times;
+}
+
+class UserState {
+	[string]$username;
+	[bool]$lock;
+
+	UserState([string]$username, [Bool]$lock) {
+		$this.username = $username;
+		$this.lock = $lock;
+	}
 }
 
 class ProcessConf {
@@ -58,6 +70,7 @@ class StorageConfig {
 	[DayTimeProfile[]]$TimeConfiguration;
 	[string[]] $Masks;
 	[ProcessConf[]] $ProcessConf;
+	[UserState[]]$users;
 	[bool]$DoHomeWork;
 	[bool]$ParentControlTimeState;
 	[bool]$ParentControlSystemIsOn;
@@ -89,7 +102,7 @@ class StorageConfig {
 		}
 
 		function GetMask() {
-			$this.SQLCommand.CommandText = "select template from masks where user_id = " + $this.user_id;
+			$this.SQLCommand.CommandText = "select template from masks where active = 1 and user_id = " + $this.user_id;
 			$RS = $this.SQLCommand.ExecuteReader();
 
 			$masks = @()
@@ -134,9 +147,26 @@ class StorageConfig {
 
 		}
 
+		function GetUsersStates() {
+			$this.SQLCommand.CommandText = "select * from users";
+			$RS = $this.SQLCommand.ExecuteReader();
+			$users = @()
+			while ($RS.Read()) {
+				$username = $RS["name"];
+				$config_lock = $RS["is_lock"];
+				$real_lock = -not [SystemFunc]::GetUsersStates($username);
+				$users += [UserState]::new($username, $config_lock); ;
+			}
+			$RS.Close()
+
+			return $users
+
+		}
+
 		$this.SQLConnection = GetConnection $this.sServerAddr $this.sServerPort $this.sDataBase $this.sUser $this.sPwd;
 		$this.SQLCommand = GetSQLCommand $this.SQLConnection;
 		$this.user_id = GetUserID;
+		$this.users = GetUsersStates;
 
 		$this.Masks = GetMask;
 		$this.DoHomeWork = GetHomeWorkMark;
