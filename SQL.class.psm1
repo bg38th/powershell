@@ -62,6 +62,7 @@ class StorageConfig {
 	hidden [string]$sPwd = 'KbcnUytd!1';
 	hidden [MySql.Data.MySqlClient.MySqlConnection] $SQLConnection;
 
+	hidden [string] $sys_computername = $env:ComputerName;
 	hidden [string] $sys_username = $env:UserName;
 	hidden [string] $username = "lena";
 	hidden [string] $user_id;
@@ -135,7 +136,7 @@ class StorageConfig {
 		}
 
 		function GetHideProcesses() {
-			$this.SQLCommand.CommandText = "select * from hide_programs where user_id = " + $this.user_id;
+			$this.SQLCommand.CommandText = "select * from hide_programs where user_id = " + $this.user_id + " and ws = '" + $this.sys_computername + "'";
 			$RS = $this.SQLCommand.ExecuteReader();
 			$HideProc = @()
 			while ($RS.Read()) {
@@ -153,8 +154,20 @@ class StorageConfig {
 			$users = @()
 			while ($RS.Read()) {
 				$username = $RS["name"];
+				$real_state = [SystemFunc]::GetUsersStates($username);
+				if ($null -eq $real_state) {
+					continue;
+				}
+
 				$config_lock = $RS["is_lock"];
-				$real_lock = -not [SystemFunc]::GetUsersStates($username);
+				if ($config_lock -xor -not $real_state) {
+					if ($config_lock) {
+						[SystemFunc]::BlockUser($username);
+					}
+					else {
+						[SystemFunc]::UnBlockUser($username);
+					}
+				}
 				$users += [UserState]::new($username, $config_lock); ;
 			}
 			$RS.Close()
@@ -204,7 +217,7 @@ class StorageConfig {
 
 		$sFileName = Split-Path $sFullProcessPath -Leaf
 
-		$this.SQLCommand.CommandText = "select set_hide_program(" + $this.user_id + ", '" + ($sFullProcessPath -replace "\\", "\\\\") + "', '" + $sFileName + "')";
+		$this.SQLCommand.CommandText = "select set_hide_program(" + $this.user_id + ", '" + $this.sys_computername + "', '" + ($sFullProcessPath -replace "\\", "\\\\") + "', '" + $sFileName + "')";
 		$num = $this.SQLCommand.ExecuteScalar();
 
 		$oProcessConf = [ProcessConf]::new($num, $sFullProcessPath, $sFileName);

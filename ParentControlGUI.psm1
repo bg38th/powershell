@@ -51,7 +51,7 @@ class ParentControlGUI : System.Windows.Forms.Form {
 
         $LinkLabel = New-Object System.Windows.Forms.LinkLabel
         $LinkLabel.Location = New-Object System.Drawing.Point(40, 100)
-        $LinkLabel.Size = New-Object System.Drawing.Size(150,20)
+        $LinkLabel.Size = New-Object System.Drawing.Size(150, 20)
         $LinkLabel.LinkColor = "BLUE"
         $LinkLabel.ActiveLinkColor = "RED"
         $LinkLabel.Text = "Настройка..."

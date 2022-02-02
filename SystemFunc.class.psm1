@@ -11,7 +11,7 @@ class SystemFunc {
 		Enable-LocalUser -Name $username 
 	}
 
-	static [bool]GetUsersStates($username) {
+	static [nullable[bool]]GetUsersStates($username) {
 		
 		try {
 			Get-LocalUser $username -ErrorAction Stop | Out-Null;
@@ -19,7 +19,7 @@ class SystemFunc {
 			return $SysUser.enabled;
 		}
 		catch {
-			return $false;
+			return $null;
 		}
 	}
 }

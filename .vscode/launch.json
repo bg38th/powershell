@@ -2,5 +2,31 @@
 	"args": [
 		"X:\\Series\\Галилео"
 	],
-	"configurations": []
+	"configurations": [
+		{
+			"name": "PowerShell Launch Current File",
+			"type": "PowerShell",
+			"request": "launch",
+			"script": "${file}",
+			"cwd": "${workspaceFolder}"
+		},
+		{
+			"name": "PowerShell Interactive Session",
+			"type": "PowerShell",
+			"request": "launch",
+			"cwd": ""
+		},
+		{
+			"name": "PowerShell Attach to Host Process",
+			"type": "PowerShell",
+			"request": "attach",
+			"runspaceId": 1
+		},
+		{
+			"name": "PowerShell Attach Interactive Session Runspace",
+			"type": "PowerShell",
+			"request": "attach",
+			"processId": "current"
+		}
+	]
 }

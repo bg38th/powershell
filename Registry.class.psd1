@@ -8,22 +8,7 @@
 	GUID                   = '2dc64c35-9152-413a-ba22-ca11837a041d'
 	VariablesToExport      = '*'
 	FunctionsToExport      = @(
-		"GetDoHomework"
-		, "SetDoHomework"
-		, "ToggleDoHomework"
-		, "ClearDoHomework"
-		, "GetProcessConf"
-		, "SetProcessConf"
-		, "SetMaskFileName"
-		, "RemoveProcessConf"
-		, "GetTimeConfigJSON"
-		, "GetParentControlTimeState"
-		, "SetParentControlTimeState"
-		, "ToggleParentControlTimeState"
-		, "GetParentControlSystemActive"
-		, "SetParentControlSystemActive"
-		, "ParentControlActiveToOn"
-		, "ParentControlActiveToOff"
-		, "GetType"
+		"GetURLBlocklist"
+		, "SetURLBlocklist"
 	)
 }
