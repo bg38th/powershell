@@ -4,7 +4,7 @@
 	ModuleVersion          = "1.0.0.0"
 	Author                 = "Boris Gordon"
 	Copyright              = "38th.ru"
-	PowerShellVersion      = "7.0"
+	PowerShellVersion      = "5.0"
 	DotNetFrameworkVersion = "4.0"
 	FunctionsToExport      = "CheckWorkTime"
 	RequiredModules        = @(

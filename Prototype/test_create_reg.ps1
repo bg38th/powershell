@@ -1,4 +1,7 @@
-$BaseKey = 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\URLBlocklist'
+Using module  ..\Registry.class.psd1
+
+
+<# $BaseKey = 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\URLBlocklist'
 $bHasMainKey = Test-Path -Path $BaseKey;
 
 if ( $bHasMainKey ) { 
@@ -13,7 +16,7 @@ else {
 		}
 	}
 }
-
+$PSVersionTable
 $rScriptConf = 'Registry::' + $rScriptConf;
 
 $Blocks = Get-Item -Path $rScriptConf -ErrorAction silentlycontinue;
@@ -23,5 +26,15 @@ if ( $null -ne $Blocks -and $Blocks -ne "") {
 		$Value = $oBlock | Select-Object -ExpandProperty $block;
 		Write-Host $Value
 	}
+} #>
+
+$ChromeBlock = [URLBlocklist]::new();
+$bChromeIsBlock = $ChromeBlock.CheckURLBlocklist();
+
+if (-not $bChromeIsBlock) {
+	$ChromeBlock.SetURLBlocklist()
 }
 
+$ChromeBlock.ClearURLBlocklist()
+
+Write-Host $bChromeIsBlock

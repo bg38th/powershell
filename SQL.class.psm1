@@ -248,7 +248,7 @@ class StorageConfig {
 		$this.SQLCommand.CommandText = "DELETE FROM hide_programs where id = " + $ID;
 		$this.SQLCommand.ExecuteNonQuery();
 
-		$this.ProcessConf = $this.ProcessConf | Where-Object { $_.ID –ne $ID }
+		$this.ProcessConf = $this.ProcessConf | Where-Object { $_.ID -ne $ID }
 	}
 
 	[Bool]GetDoHomework() {

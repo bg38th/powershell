@@ -1,6 +1,6 @@
 Using module  .\TimeInterval.class.psd1
 Using module  .\SystemFunc.class.psd1
-# Using module  .\Registry.class.psd1
+Using module  .\Registry.class.psd1
 Using module  .\SQL.class.psd1
 Clear-Host
 function GetProcess([string[]]$arrMask) {
@@ -40,11 +40,14 @@ function GetProcessConf([StorageConfig]$oStoreConf, [string]$sProcessPath) {
 }
 
 $oStoreConfig = [StorageConfig]::new();
+$ChromeBlock = [URLBlocklist]::new();
 
 $oIntervalConfig = [TimeIntervalProcessor]::new($oStoreConfig);
 $bIntervalActive = $oIntervalConfig.CheckWorkTime($null);
 # $bIntervalActive = $oIntervalConfig.CheckWorkTime("07.01.2021 21:01");
 $bParentControlUp = ($bIntervalActive -and $oStoreConfig.ParentControlSystemIsOn -and -not $oStoreConfig.DoHomeWork);
+
+$bChromeIsBlock = $ChromeBlock.CheckURLBlocklist();
 
 if ($bParentControlUp) {
 	$oProcesses = GetProcess $oStoreConfig.Masks
@@ -65,18 +68,27 @@ if ($bParentControlUp) {
 			Write-Host $sFullProcessPath " не найден"
 		}
 	}
+
+	if (-not $bChromeIsBlock) {
+		$ChromeBlock.SetURLBlocklist()
+	}
 }
 else {
 	foreach ($oChildPart in $oStoreConfig.ProcessConf ) {
 		$FilePath = Split-Path $oChildPart.ProcessPath;
 		$SourcePath = $FilePath + '\' + $oChildPart.MaskFileName
 		Rename-Item -Path $SourcePath -NewName $oChildPart.NativeFileName
-		New-WinEvent -ProviderName 'Microsoft-Windows-PowerShell' -Id 4100 -Payload @('Parent Control: Восстановлен процесс. ', $oChildPart.NativeFileName, '');
+		# New-WinEvent -ProviderName 'Microsoft-Windows-PowerShell' -Id 4100 -Payload @('Parent Control: Восстановлен процесс. ', $oChildPart.NativeFileName, '');
 
 		Write-Host $oChildPart.NativeFileName " восстановлен"
 
 		$oStoreConfig.RemoveProcessConf($oChildPart);
 	}
+
+	if ($bChromeIsBlock) {
+		$ChromeBlock.ClearURLBlocklist()
+	}
+
 }
 
 if (-not $bIntervalActive) {
