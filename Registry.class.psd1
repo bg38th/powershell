@@ -13,4 +13,11 @@
 		, "SetURLBlocklist"
 		, "ClearURLBlocklist"
 	)
+	RequiredModules        = @(
+		@{
+			ModuleName    = ".\SQL.class.psd1"; 
+			ModuleVersion = "1.0.0.0"; 
+			Guid          = "b529f59a-2bc5-4c8c-9a39-debc47603201";
+		}
+	)
 }

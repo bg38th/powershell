@@ -2,7 +2,7 @@ Using module  .\TimeInterval.class.psd1
 Using module  .\SystemFunc.class.psd1
 Using module  .\Registry.class.psd1
 Using module  .\SQL.class.psd1
-Clear-Host
+# Clear-Host
 function GetProcess([string[]]$arrMask) {
 	$PathS = @()
 	$IDs = @()
@@ -47,7 +47,7 @@ $bIntervalActive = $oIntervalConfig.CheckWorkTime($null);
 # $bIntervalActive = $oIntervalConfig.CheckWorkTime("07.01.2021 21:01");
 $bParentControlUp = ($bIntervalActive -and $oStoreConfig.ParentControlSystemIsOn -and -not $oStoreConfig.DoHomeWork);
 
-$bChromeIsBlock = $ChromeBlock.CheckURLBlocklist();
+$bChromeIsBlock = $ChromeBlock.CheckURLBlocklist($oStoreConfig);
 
 if ($bParentControlUp) {
 	$oProcesses = GetProcess $oStoreConfig.Masks
@@ -70,7 +70,7 @@ if ($bParentControlUp) {
 	}
 
 	if (-not $bChromeIsBlock) {
-		$ChromeBlock.SetURLBlocklist()
+		$ChromeBlock.SetURLBlocklist($oStoreConfig)
 	}
 }
 else {

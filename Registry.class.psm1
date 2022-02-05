@@ -1,3 +1,4 @@
+Using module  .\SQL.class.psd1
 class URLBlock {
 	[string]$key;
 	[string]$rule;
@@ -57,8 +58,9 @@ class URLBlocklist {
 		return $this.List;
 	}
 
-	[bool]CheckURLBlocklist() {
-		foreach ($sHost in $this.arrHosts) {
+	[bool]CheckURLBlocklist([StorageConfig]$oStoreConf) {
+		# foreach ($sHost in $this.arrHosts) {
+		foreach ($sHost in $oStoreConf.BlockedHosts) {
 			$bThisHostHas = $false;
 			foreach ($block in $this.List) {
 				if ($sHost -eq $block.rule) {
@@ -74,28 +76,24 @@ class URLBlocklist {
 		return $true;
 	}
 
-	[void]SetURLBlocklist() {
-		foreach ($sHost in $this.arrHosts) {
-			$bThisHostHas = $false;
-			foreach ($block in $this.List) {
-				if ($sHost -eq $block.rule) {
-					$bThisHostHas = $true;
-					break;
-				}
-			}
-			if (-not $bThisHostHas) {
-				if ($this.List.length -ne 0) {
-					$newArr = [System.Collections.ArrayList]::new($this.List);
-				}
-				else {
-					$newArr = [System.Collections.ArrayList]::new();
-				}
-				$iNewNum = $newArr.Count + 1;
-				[void]$newArr.Add([URLBlock]::new($iNewNum.ToString(), $sHost));
-				Set-ItemProperty -Path $this.curPath -Name $iNewNum.ToString() -Value $sHost;
-			}
+	[void]SetURLBlocklist([StorageConfig]$oStoreConf) {
+		if ($this.List.length -ne 0) {
+			$newArr = [System.Collections.ArrayList]::new($this.List);
+			$MaxElem = $newArr | Measure-Object -Property key -Maximum;
+			$iNewNum = $MaxElem.Maximum;
 		}
-		Invoke-Command -ScriptBlock { Get-Process -Name Chrome | Stop-Process -Force | Clear-DnsClientCache }
+		else {
+			$newArr = [System.Collections.ArrayList]::new();
+			$iNewNum = 0;
+		}
+		[string[]]$rules = $this.List | ForEach-Object { $PSItem.rule };
+		[string[]]$ResArray = $oStoreConf.BlockedHosts | ? { $rules -notcontains $_ }
+		foreach ($sHost in $ResArray) {
+			$iNewNum++;
+			[void]$newArr.Add([URLBlock]::new($iNewNum.ToString(), $sHost));
+			Set-ItemProperty -Path $this.curPath -Name $iNewNum.ToString() -Value $sHost;
+		}
+		Get-Process -Name Chrome -ErrorAction Ignore -WarningAction Ignore | Stop-Process -Force | Clear-DnsClientCache 
 	}
 
 	[void]ClearURLBlocklist() {
@@ -103,7 +101,7 @@ class URLBlocklist {
 			Remove-ItemProperty -Path $this.curPath -Name $block.key -ErrorAction silentlycontinue
 		}
 		$this.List = @();
-		Invoke-Command -ScriptBlock { Get-Process -Name Chrome | Stop-Process -Force | Clear-DnsClientCache }
+		Get-Process -Name Chrome -ErrorAction Ignore -WarningAction Ignore | Stop-Process -Force | Clear-DnsClientCache 
 	}
 
 }

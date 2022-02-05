@@ -70,6 +70,7 @@ class StorageConfig {
 	[MySql.Data.MySqlClient.MySqlCommand] $SQLCommand;
 	[DayTimeProfile[]]$TimeConfiguration;
 	[string[]] $Masks;
+	[string[]] $BlockedHosts;
 	[ProcessConf[]] $ProcessConf;
 	[UserState[]]$users;
 	[bool]$DoHomeWork;
@@ -176,143 +177,156 @@ class StorageConfig {
 
 		}
 
-		$this.SQLConnection = GetConnection $this.sServerAddr $this.sServerPort $this.sDataBase $this.sUser $this.sPwd;
-		$this.SQLCommand = GetSQLCommand $this.SQLConnection;
-		$this.user_id = GetUserID;
-		$this.users = GetUsersStates;
-
-		$this.Masks = GetMask;
-		$this.DoHomeWork = GetHomeWorkMark;
-
-		$this.ParentControlTimeState = GetActiveTimeParentControl;
-		$this.ParentControlSystemIsOn = GetActiveSystemParentControl;
-		$this.ProcessConf = GetHideProcesses;
-		$this.UpdateTimeConfiguration();
-
-	}
-
-	[string] GetType() {
-		return $this.type;
-	}
-
-	[ProcessConf]GetProcessConf([string]$sFullProcessPath) {
-		foreach ($ItemProcessConf in $this.ProcessConf) {
-			if ($ItemProcessConf.ProcessPath -eq $sFullProcessPath) {
-				return $ItemProcessConf;
+		function GetBlockedHosts() {
+			$this.SQLCommand.CommandText = "select * from block_hosts where user_id = " + $this.user_id ;
+			$RS = $this.SQLCommand.ExecuteReader();
+			$BockHosts = @()
+			while ($RS.Read()) {
+				$BockHosts += $RS["host"] ;
 			}
+			$RS.Close()
+
+			return $BockHosts
 		}
 
+	$this.SQLConnection = GetConnection $this.sServerAddr $this.sServerPort $this.sDataBase $this.sUser $this.sPwd;
+	$this.SQLCommand = GetSQLCommand $this.SQLConnection;
+	$this.user_id = GetUserID;
+	$this.users = GetUsersStates;
+
+	$this.Masks = GetMask;
+	$this.DoHomeWork = GetHomeWorkMark;
+
+	$this.ParentControlTimeState = GetActiveTimeParentControl;
+	$this.ParentControlSystemIsOn = GetActiveSystemParentControl;
+	$this.ProcessConf = GetHideProcesses;
+	$this.BlockedHosts = GetBlockedHosts;
+	$this.UpdateTimeConfiguration();
+
+}
+
+[string] GetType() {
+	return $this.type;
+}
+
+[ProcessConf]GetProcessConf([string]$sFullProcessPath) {
+	foreach ($ItemProcessConf in $this.ProcessConf) {
+		if ($ItemProcessConf.ProcessPath -eq $sFullProcessPath) {
+			return $ItemProcessConf;
+		}
+	}
+
+	return $null;
+}
+
+[ProcessConf]SetProcessConf([string]$sFullProcessPath) {
+	function GetFromArray($arr, $id) {
+		foreach ($elem in $arr) {
+			if ($elem.ID -eq $id) {
+				return $elem;
+			}
+		}
 		return $null;
 	}
 
-	[ProcessConf]SetProcessConf([string]$sFullProcessPath) {
-		function GetFromArray($arr, $id) {
-			foreach ($elem in $arr) {
-				if ($elem.ID -eq $id) {
-					return $elem;
-				}
-			}
-			return $null;
-		}
+	$sFileName = Split-Path $sFullProcessPath -Leaf
 
-		$sFileName = Split-Path $sFullProcessPath -Leaf
+	$this.SQLCommand.CommandText = "select set_hide_program(" + $this.user_id + ", '" + $this.sys_computername + "', '" + ($sFullProcessPath -replace "\\", "\\\\") + "', '" + $sFileName + "')";
+	$num = $this.SQLCommand.ExecuteScalar();
 
-		$this.SQLCommand.CommandText = "select set_hide_program(" + $this.user_id + ", '" + $this.sys_computername + "', '" + ($sFullProcessPath -replace "\\", "\\\\") + "', '" + $sFileName + "')";
-		$num = $this.SQLCommand.ExecuteScalar();
-
-		$oProcessConf = [ProcessConf]::new($num, $sFullProcessPath, $sFileName);
-		$curProcessConf = GetFromArray $this.ProcessConf $num
-		if ($null -eq $curProcessConf) {
-			$this.ProcessConf += $oProcessConf;
-			return $oProcessConf;
-		}
-		else {
-			return $curProcessConf;
-		}
-
+	$oProcessConf = [ProcessConf]::new($num, $sFullProcessPath, $sFileName);
+	$curProcessConf = GetFromArray $this.ProcessConf $num
+	if ($null -eq $curProcessConf) {
+		$this.ProcessConf += $oProcessConf;
+		return $oProcessConf;
 	}
+	else {
+		return $curProcessConf;
+	}
+
+}
 	
-	[string]SetMaskFileName([ProcessConf]$oProcessConf) {
-		$sNewFileName = $oProcessConf.SetMaskFileName()
-		$oProcessConf.MaskFileName = $sNewFileName;
+[string]SetMaskFileName([ProcessConf]$oProcessConf) {
+	$sNewFileName = $oProcessConf.SetMaskFileName()
+	$oProcessConf.MaskFileName = $sNewFileName;
 		
-		$this.SQLCommand.CommandText = "UPDATE hide_programs SET hidename = '" + $sNewFileName + "' where id = " + $oProcessConf.ID;
-		$this.SQLCommand.ExecuteNonQuery();
+	$this.SQLCommand.CommandText = "UPDATE hide_programs SET hidename = '" + $sNewFileName + "' where id = " + $oProcessConf.ID;
+	$this.SQLCommand.ExecuteNonQuery();
 
-		return $sNewFileName;
-	}
+	return $sNewFileName;
+}
 
-	[void]RemoveProcessConf([ProcessConf]$ProcessConf) {
+[void]RemoveProcessConf([ProcessConf]$ProcessConf) {
 		
-		$ID = $ProcessConf.ID;
-		$this.SQLCommand.CommandText = "DELETE FROM hide_programs where id = " + $ID;
-		$this.SQLCommand.ExecuteNonQuery();
+	$ID = $ProcessConf.ID;
+	$this.SQLCommand.CommandText = "DELETE FROM hide_programs where id = " + $ID;
+	$this.SQLCommand.ExecuteNonQuery();
 
-		$this.ProcessConf = $this.ProcessConf | Where-Object { $_.ID -ne $ID }
+	$this.ProcessConf = $this.ProcessConf | Where-Object { $_.ID -ne $ID }
+}
+
+[Bool]GetDoHomework() {
+	$this.SQLCommand.CommandText = "select value from flags where user_id = " + $this.user_id + " and name = 'homework'";
+	$RS_scalar = $this.SQLCommand.ExecuteScalar();
+	$this.DoHomeWork = [bool]$RS_scalar;
+	return $this.DoHomeWork;
+}
+
+[bool]SetDoHomework([bool]$mark) {
+	$this.DoHomeWork = $mark;
+	if ($mark) { $mark_sql = 1 }else { $mark_sql = 0 }
+	$this.SQLCommand.CommandText = "UPDATE flags SET value = '" + $mark_sql + "' where user_id = " + $this.user_id + " and name = 'homework'";
+	return $this.SQLCommand.ExecuteNonQuery();
+}
+
+[bool]ToggleDoHomework([bool]$NewMark) {
+	$curMark = $this.GetDoHomework();
+	if ($curMark -xor $NewMark) {
+		$this.SetDoHomework($NewMark);
+		return $true;
 	}
 
-	[Bool]GetDoHomework() {
-		$this.SQLCommand.CommandText = "select value from flags where user_id = " + $this.user_id + " and name = 'homework'";
-		$RS_scalar = $this.SQLCommand.ExecuteScalar();
-		$this.DoHomeWork = [bool]$RS_scalar;
-		return $this.DoHomeWork;
-	}
+	return $false;
+}
 
-	[bool]SetDoHomework([bool]$mark) {
-		$this.DoHomeWork = $mark;
-		if ($mark) { $mark_sql = 1 }else { $mark_sql = 0 }
-		$this.SQLCommand.CommandText = "UPDATE flags SET value = '" + $mark_sql + "' where user_id = " + $this.user_id + " and name = 'homework'";
-		return $this.SQLCommand.ExecuteNonQuery();
-	}
-
-	[bool]ToggleDoHomework([bool]$NewMark) {
-		$curMark = $this.GetDoHomework();
-		if ($curMark -xor $NewMark) {
-			$this.SetDoHomework($NewMark);
-			return $true;
-		}
-
-		return $false;
-	}
-
-	[bool]GetParentControlTimeState() {
-		$this.SQLCommand.CommandText = "select value from flags where user_id = " + $this.user_id + " and name = 'timestate'";
-		$RS_scalar = $this.SQLCommand.ExecuteScalar();
-		$this.ParentControlTimeState = [bool]$RS_scalar;
+[bool]GetParentControlTimeState() {
+	$this.SQLCommand.CommandText = "select value from flags where user_id = " + $this.user_id + " and name = 'timestate'";
+	$RS_scalar = $this.SQLCommand.ExecuteScalar();
+	$this.ParentControlTimeState = [bool]$RS_scalar;
 		
-		return $this.ParentControlTimeState;
-	}
+	return $this.ParentControlTimeState;
+}
 	
-	[bool]SetParentControlTimeState([bool]$state) {
-		$this.ParentControlTimeState = $state;
-		if ($state) { $state_sql = 1 }else { $state_sql = 0 }
-		$this.SQLCommand.CommandText = "UPDATE flags SET value = '" + $state_sql + "' where user_id = " + $this.user_id + " and name = 'timestate'";
-		return $this.SQLCommand.ExecuteNonQuery();
+[bool]SetParentControlTimeState([bool]$state) {
+	$this.ParentControlTimeState = $state;
+	if ($state) { $state_sql = 1 }else { $state_sql = 0 }
+	$this.SQLCommand.CommandText = "UPDATE flags SET value = '" + $state_sql + "' where user_id = " + $this.user_id + " and name = 'timestate'";
+	return $this.SQLCommand.ExecuteNonQuery();
+}
+
+[bool]ToggleParentControlTimeState([bool]$NewState) {
+	$curState = $this.GetParentControlTimeState();
+	if ($curState -xor $NewState) {
+		$this.SetParentControlTimeState($NewState);
+		return $true;
 	}
 
-	[bool]ToggleParentControlTimeState([bool]$NewState) {
-		$curState = $this.GetParentControlTimeState();
-		if ($curState -xor $NewState) {
-			$this.SetParentControlTimeState($NewState);
-			return $true;
-		}
+	return $false;
+}
 
-		return $false;
+[void]UpdateTimeConfiguration() {
+	$this.SQLCommand.CommandText = "select d.id day_id from days d order by d.id";
+	$DayRS = $this.SQLCommand.ExecuteReader();
+	$day_ids = @();
+	while ($DayRS.Read()) {
+		$day_ids += $DayRS["day_id"];
 	}
-
-	[void]UpdateTimeConfiguration() {
-		$this.SQLCommand.CommandText = "select d.id day_id from days d order by d.id";
-		$DayRS = $this.SQLCommand.ExecuteReader();
-		$day_ids = @();
-		while ($DayRS.Read()) {
-			$day_ids += $DayRS["day_id"];
-		}
-		$DayRS.Close();
+	$DayRS.Close();
 		
-		foreach ($day_id in $day_ids) {
-			$cutDayProfile = [DayTimeProfile]::new();
-			$cutDayProfile.day = $day_id;
-			$this.SQLCommand.CommandText = "
+	foreach ($day_id in $day_ids) {
+		$cutDayProfile = [DayTimeProfile]::new();
+		$cutDayProfile.day = $day_id;
+		$this.SQLCommand.CommandText = "
 SELECT
 	t.interval_id
     ,CONCAT(lpad(i.start_hour, 2, 0), ':', lpad(i.start_minute, 2, 0)) as start
@@ -329,18 +343,18 @@ ORDER BY
 	,i.start_hour
 	,i.start_minute
 ";
-			$IntervalRS = $this.SQLCommand.ExecuteReader();
-			while ($IntervalRS.Read()) {
-				$cutDayProfile.times += [SimpleTimeInterval]::new($IntervalRS["start"], $IntervalRS["end"])
-			}
-			$IntervalRS.Close();
-
-			$this.TimeConfiguration += $cutDayProfile;
+		$IntervalRS = $this.SQLCommand.ExecuteReader();
+		while ($IntervalRS.Read()) {
+			$cutDayProfile.times += [SimpleTimeInterval]::new($IntervalRS["start"], $IntervalRS["end"])
 		}
-	}
+		$IntervalRS.Close();
 
-	[DayTimeProfile[]]GetTimeConfiguration() {
-		return $this.TimeConfiguration;
+		$this.TimeConfiguration += $cutDayProfile;
 	}
+}
+
+[DayTimeProfile[]]GetTimeConfiguration() {
+	return $this.TimeConfiguration;
+}
 
 }
